@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for taking a look at Blitztext macOS Preview.
+Thanks for taking a look at the Quick Text preview.
 
 This repository is intentionally a preview. Contributions should make it easier to learn from, build, fork, or safely extend.
 
@@ -41,10 +41,12 @@ Keep changes small when possible. Avoid unrelated cleanup in the same PR.
 
 This preview currently does not include:
 
-- other platforms
+- platforms other than macOS and Windows 11
 - a hosted backend
 - packaged releases
 - bundled local model files
 - local text rewriting
 
-Those can be discussed in issues, but please keep PRs focused on the current macOS preview unless a maintainer agrees on a larger direction first.
+Those can be discussed in issues, but please keep PRs focused on the current
+macOS and Windows preview scope unless a maintainer agrees on a larger
+direction first. Shared workflow behavior should stay aligned across platforms.

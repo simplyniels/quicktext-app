@@ -1,6 +1,6 @@
-# Blitztext App
+# Quick Text
 
-Blitztext App is an experimental open-source macOS menubar app for turning speech into text.
+Quick Text is an experimental open-source macOS menu-bar and Windows 11 tray app for turning speech into text.
 
 It is intentionally small and unfinished. The goal is to make a real workflow visible and hackable: press a hotkey, speak, get text back, optionally rewrite it, and paste it into the app you were using.
 
@@ -10,16 +10,16 @@ This is a learning and experimentation project, not a polished product.
 
 ## What It Does
 
-- **Blitztext**: record speech and transcribe it.
-- **Blitztext+**: record speech, transcribe it, then turn the rough draft into cleaner writing.
-- **Blitztext $%&!**: turn frustrated speech into a calmer message.
-- **Blitztext :)**: add fitting emojis to dictated text.
+- **Quick Text**: record speech and transcribe it.
+- **Quick Text+**: record speech, transcribe it, then turn the rough draft into cleaner writing.
+- **Quick Text $%&!**: turn frustrated speech into a calmer message.
+- **Quick Text :)**: add fitting emojis to dictated text.
 
 ## Important Preview Notes
 
-- macOS only.
+- Native macOS and Windows 11 implementations.
 - Bring your own OpenAI API key.
-- No hosted Blitztext backend is included or provided.
+- No hosted Quick Text backend is included or provided.
 - In online mode, audio and text are sent directly from the app to the OpenAI API.
 - Optional local transcription via WhisperKit/CoreML if you install a compatible model locally.
 - `./build.sh` creates a locally ad-hoc-signed development app. No notarized release binary is provided.
@@ -34,16 +34,18 @@ The intent is not to ship a one-click finished app. The intent is to make a real
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/online-mode.png" alt="Blitztext online transcription mode" width="420"></td>
-    <td><img src="docs/screenshots/local-mode.png" alt="Blitztext secure local transcription mode" width="420"></td>
+    <td><img src="docs/screenshots/online-mode.png" alt="Quick Text online transcription mode" width="420"></td>
+    <td><img src="docs/screenshots/local-mode.png" alt="Quick Text secure local transcription mode" width="420"></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/local-model-picker.png" alt="Blitztext local model picker" width="420"></td>
-    <td><img src="docs/screenshots/settings-customize.png" alt="Blitztext settings and customization view" width="420"></td>
+    <td><img src="docs/screenshots/local-model-picker.png" alt="Quick Text local model picker" width="420"></td>
+    <td><img src="docs/screenshots/settings-customize.png" alt="Quick Text settings and customization view" width="420"></td>
   </tr>
 </table>
 
 ## Requirements
+
+### macOS
 
 - macOS 14 or newer
 - Xcode 16 or newer (Swift 5.10), with Command Line Tools installed and selected for `xcodebuild`
@@ -52,11 +54,17 @@ The intent is not to ship a one-click finished app. The intent is to make a real
   - `whisper-1` for transcription
   - `gpt-4o-mini` and optionally `gpt-4o` for rewriting
 - For local-only transcription: a WhisperKit CoreML model in:
-  `~/Library/Application Support/Blitztext/models/whisperkit/`
+  `~/Library/Application Support/Quick Text/models/whisperkit/`
 
 The build also pulls one Swift Package dependency automatically:
 
 - [`argmax-oss-swift`](https://github.com/argmaxinc/argmax-oss-swift) (WhisperKit) — used for local on-device transcription.
+
+### Windows 11
+
+- Windows 11 ARM64 or x64
+- .NET 8 SDK for building
+- Optional local transcription via `whisper.cpp`
 
 Install XcodeGen if needed:
 
@@ -67,8 +75,8 @@ brew install xcodegen
 ## Build And Run
 
 ```bash
-git clone https://github.com/cmagnussen/blitztext-app.git
-cd blitztext-app
+git clone https://github.com/cmagnussen/quicktext-app.git
+cd quicktext-app
 ./build.sh --run
 ```
 
@@ -86,40 +94,64 @@ For fully local transcription, install a WhisperKit CoreML model and enable **Si
 
 For a slower, more explicit walkthrough, see [docs/setup.md](docs/setup.md).
 
+### Build And Run On Windows 11
+
+```powershell
+.\build-windows.ps1 -Configuration Debug -Run
+```
+
+For native ARM64 and x64 setup builds:
+
+```powershell
+.\build-windows.ps1 -Configuration Release
+```
+
+See [docs/setup-windows.md](docs/setup-windows.md) for installation, Windows
+hotkeys, microphone permissions, and optional local transcription.
+
 ## Permissions
 
-Blitztext asks for:
+Quick Text asks for:
 
 - **Microphone**: to record your voice.
 - **Accessibility**: to paste the result back into the app you were using.
 
 If you do not grant Accessibility permission, you can still copy results manually.
 
-Full Disk Access is not required. If auto-paste does not work even though transcription succeeds, open **System Settings -> Privacy & Security -> Accessibility**, enable Blitztext there, restart Blitztext, and try again with the cursor focused in a text field. If macOS shows multiple Blitztext entries, remove or disable the old ones and grant the permission to the app you just built or installed.
+On Windows, microphone access is controlled under **Privacy & security >
+Microphone**. Direct paste uses the clipboard plus simulated `Ctrl+V`; no
+separate accessibility permission exists.
+
+Full Disk Access is not required. If auto-paste does not work even though transcription succeeds, open **System Settings -> Privacy & Security -> Accessibility**, enable Quick Text there, restart Quick Text, and try again with the cursor focused in a text field. If macOS shows multiple Quick Text entries, remove or disable the old ones and grant the permission to the app you just built or installed.
 
 ## Data Flow
 
 The preview has no custom backend.
 
 ```text
-Online transcription: Your Mac -> OpenAI Audio Transcriptions API
-Text rewriting:       Your Mac -> OpenAI Chat Completions API
-Local transcription:  Your Mac -> WhisperKit/CoreML on device
+Online transcription: Your device -> OpenAI Audio Transcriptions API
+Text rewriting:       Your device -> OpenAI Chat Completions API
+Local transcription:  Your device -> WhisperKit/CoreML or whisper.cpp
 ```
 
-The app stores your OpenAI API key in the user's macOS Keychain.
+The app stores your OpenAI API key in macOS Keychain or Windows Credential Manager.
 
 Read [docs/privacy.md](docs/privacy.md) before using the preview with sensitive content.
 
 ## Project Structure
 
 ```text
-BlitztextMac/
+QuickTextMac/
   App/          App lifecycle and paste handling
   Features/     Workflows, menu bar UI, settings
   Services/     Recording, OpenAI calls, hotkeys, local storage
   Views/        Shared SwiftUI views
+QuickTextWindows/
+  Services/     Recording, OpenAI, hotkeys, credentials, local transcription
+  App.cs        Tray lifecycle
+  MainWindow.cs Main UI, settings, and workflow coordination
 build.sh        Local build script
+build-windows.ps1 Windows build, publish, and install script
 docs/           Setup, privacy, roadmap, preflight, landing page notes
 ```
 
@@ -151,7 +183,7 @@ Project names, logos, and app icons are not automatically granted as trademarks 
 
 This is an experimental, non-commercial open-source project, provided as-is under the MIT License without warranty or support. Nothing is sold here and no installation or operation is performed on your behalf.
 
-The companion website (blitztext.de) is operated by Blackboat Internet GmbH:
+The companion website (quicktext.de) is operated by Blackboat Internet GmbH:
 
 - Impressum: https://www.blackboat.com/impressum
 - Datenschutz / Privacy: https://www.blackboat.com/datenschutz

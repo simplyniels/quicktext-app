@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report something broken in the macOS preview
+about: Report something broken in the macOS or Windows preview
 title: ""
 labels: bug
 assignees: ""
@@ -20,9 +20,9 @@ assignees: ""
 
 ## Environment
 
-- macOS version:
-- Mac model/chip:
-- Xcode version:
+- Platform and OS version:
+- Device model/chip:
+- Xcode or .NET SDK version:
 - Did this happen before or after entering an OpenAI API key?:
 
 ## Notes

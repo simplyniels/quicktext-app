@@ -13,7 +13,7 @@ enum KeychainKey: String, CaseIterable, Codable {
 
 /// Stores preview credentials in the user's macOS Keychain.
 enum KeychainService {
-    private static let service = "app.blitztext.preview.credentials"
+    private static let service = "app.quicktext.preview.credentials"
 
     static func save(key: KeychainKey, value: String) throws {
         let data = Data(value.utf8)

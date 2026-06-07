@@ -1,12 +1,12 @@
 import Foundation
 
 enum AppSupportPaths {
-    private static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "app.blitztext.mac"
+    private static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "app.quicktext.mac"
 
     static var appSupportDirectoryURL: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first!
-            .appendingPathComponent("Blitztext", isDirectory: true)
+            .appendingPathComponent("Quick Text", isDirectory: true)
     }
 
     static var settingsURL: URL {

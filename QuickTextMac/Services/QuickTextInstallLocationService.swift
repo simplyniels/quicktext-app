@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-enum BlitztextInstallLocationService {
+enum QuickTextInstallLocationService {
     enum InstallLocation: Equatable {
         case applications
         case userApplications
@@ -39,11 +39,11 @@ enum BlitztextInstallLocationService {
             case .destinationUnavailable:
                 return "Der Zielordner /Applications ist nicht verfügbar."
             case .destinationExists:
-                return "Am Zielort liegt bereits eine Blitztext-Installation."
+                return "Am Zielort liegt bereits eine Quick Text-Installation."
             case .destinationNotWritable:
                 return "Der Zielordner /Applications ist auf diesem Mac nicht beschreibbar."
             case .copyFailed:
-                return "Blitztext konnte nicht nach /Applications kopiert werden."
+                return "Quick Text konnte nicht nach /Applications kopiert werden."
             }
         }
     }

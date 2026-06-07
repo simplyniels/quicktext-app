@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Blitztext macOS App - Build & Run
+# Quick Text macOS App - Build & Run
 # Voraussetzungen: Full Xcode with Command Line Tools, xcodegen
 
 RUN_AFTER=false
@@ -84,9 +84,9 @@ ensure_xcodebuild_available() {
 }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$SCRIPT_DIR/BlitztextMac"
-PROJECT_FILE="$PROJECT_DIR/BlitztextMac.xcodeproj"
-DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-blitztextmac-build"
+PROJECT_DIR="$SCRIPT_DIR/QuickTextMac"
+PROJECT_FILE="$PROJECT_DIR/QuickTextMac.xcodeproj"
+DERIVED_DATA_PATH="$SCRIPT_DIR/.derivedData-quicktextmac-build"
 cd "$PROJECT_DIR"
 
 ensure_xcodebuild_available
@@ -105,10 +105,10 @@ else
 fi
 
 # Bauen
-echo "🔨 Baue Blitztext ..."
+echo "🔨 Baue Quick Text ..."
 xcodebuild \
-    -project BlitztextMac.xcodeproj \
-    -scheme BlitztextMac \
+    -project QuickTextMac.xcodeproj \
+    -scheme QuickTextMac \
     -destination 'platform=macOS' \
     -configuration "$BUILD_CONFIGURATION" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
@@ -117,7 +117,7 @@ xcodebuild \
     clean build
 
 # App finden
-APP_PATH="$DERIVED_DATA_PATH/Build/Products/$BUILD_CONFIGURATION/Blitztext.app"
+APP_PATH="$DERIVED_DATA_PATH/Build/Products/$BUILD_CONFIGURATION/Quick Text.app"
 
 if [ ! -d "$APP_PATH" ]; then
     echo "❌ Build fehlgeschlagen – keine App gefunden."
@@ -135,7 +135,7 @@ cp -f "$PROJECT_DIR/Resources/menubar_icon.png" "$RESOURCES_DIR/" 2>/dev/null ||
 cp -f "$PROJECT_DIR/Resources/menubar_icon@2x.png" "$RESOURCES_DIR/" 2>/dev/null || true
 
 # In Projektordner kopieren
-DEST="$SCRIPT_DIR/Blitztext.app"
+DEST="$SCRIPT_DIR/Quick Text.app"
 rm -rf "$DEST"
 cp -R "$APP_PATH" "$DEST"
 echo "🔏 Signiere lokale Development-App ad-hoc. Dieses Artefakt ist nicht notarisiert."
@@ -146,7 +146,7 @@ RUN_TARGET="$DEST"
 
 if [ "$INSTALL_APP" = true ]; then
     APPS_DIR="/Applications"
-    INSTALL_DEST="$APPS_DIR/Blitztext.app"
+    INSTALL_DEST="$APPS_DIR/Quick Text.app"
     if [ ! -w "$APPS_DIR" ]; then
         echo "❌ /Applications ist nicht beschreibbar."
         echo "   Fuehre den Befehl mit passenden Rechten erneut aus oder ziehe die App manuell nach /Applications."
@@ -175,12 +175,12 @@ echo "Naechste Schritte:"
 echo "1. App starten"
 echo "2. Mikrofon erlauben"
 echo "3. Fuer direktes Einfuegen zusaetzlich Bedienungshilfen erlauben"
-echo "4. In Blitztext deinen eigenen OpenAI API Key eintragen"
+echo "4. In Quick Text deinen eigenen OpenAI API Key eintragen"
 echo "5. Loslegen und bei Bedarf im Code weiterbauen"
 echo ""
 
 # Optional: direkt starten
 if [ "$RUN_AFTER" = true ]; then
-    echo "🚀 Starte Blitztext ..."
+    echo "🚀 Starte Quick Text ..."
     open "$RUN_TARGET"
 fi

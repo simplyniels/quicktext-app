@@ -19,7 +19,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Blitztext benötigt Mikrofon-Zugriff für die Sprach-Transkription.</string>
+	<string>Quick Text benötigt Mikrofon-Zugriff für die Sprach-Transkription.</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>CFBundleIconFile</key>

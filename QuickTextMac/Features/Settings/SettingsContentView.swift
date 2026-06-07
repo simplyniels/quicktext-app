@@ -34,7 +34,7 @@ struct SettingsContentView: View {
         if !appState.accessibilityPermissionGranted {
             return 1
         }
-        if appState.isConfigured && !BlitztextInstallLocationService.shouldOfferMoveToApplications {
+        if appState.isConfigured && !QuickTextInstallLocationService.shouldOfferMoveToApplications {
             return 0
         }
         return 1
@@ -65,7 +65,7 @@ struct AccessSettingsView: View {
     }
 
     @State private var launchAtLoginService = LaunchAtLoginService()
-    @State private var currentInstallLocation = BlitztextInstallLocationService.currentInstallLocation
+    @State private var currentInstallLocation = QuickTextInstallLocationService.currentInstallLocation
     @State private var openAIAPIKey = ""
     @State private var editingAPIKey = false
     @State private var saved = false
@@ -93,7 +93,7 @@ struct AccessSettingsView: View {
                             .font(.system(size: 11.5, weight: .semibold))
                             .foregroundStyle(.primary)
 
-                        Text("Öffne Bedienungshilfen und aktiviere Blitztext. Falls Blitztext schon aktiv ist, einmal aus- und wieder einschalten.")
+                        Text("Öffne Bedienungshilfen und aktiviere Quick Text. Falls Quick Text schon aktiv ist, einmal aus- und wieder einschalten.")
                             .font(.system(size: 10.5))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -172,20 +172,20 @@ struct AccessSettingsView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(BlitztextInstallLocationService.bundleURL.path)
+                Text(QuickTextInstallLocationService.bundleURL.path)
                     .font(.system(size: 10.5, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
 
-                if !BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
-                    Text("Weitere Blitztext-Kopien auf diesem Mac können doppelte Login-Items auslösen.")
+                if !QuickTextInstallLocationService.otherInstalledBundleURLs.isEmpty {
+                    Text("Weitere Quick Text-Kopien auf diesem Mac können doppelte Login-Items auslösen.")
                         .font(.system(size: 10.5))
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 HStack(spacing: 8) {
-                    if BlitztextInstallLocationService.shouldOfferMoveToApplications {
+                    if QuickTextInstallLocationService.shouldOfferMoveToApplications {
                         Button("Nach /Applications bewegen") {
                             moveToApplications()
                         }
@@ -193,13 +193,13 @@ struct AccessSettingsView: View {
                     }
 
                     Button("Im Finder zeigen") {
-                        revealInFinder(urls: [BlitztextInstallLocationService.bundleURL])
+                        revealInFinder(urls: [QuickTextInstallLocationService.bundleURL])
                     }
                     .buttonStyle(SubtleButtonStyle())
 
-                    if !BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
+                    if !QuickTextInstallLocationService.otherInstalledBundleURLs.isEmpty {
                         Button("Weitere Kopien zeigen") {
-                            revealInFinder(urls: BlitztextInstallLocationService.otherInstalledBundleURLs)
+                            revealInFinder(urls: QuickTextInstallLocationService.otherInstalledBundleURLs)
                         }
                         .buttonStyle(SubtleButtonStyle())
                     }
@@ -222,7 +222,7 @@ struct AccessSettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 if !currentInstallLocation.isCanonicalInstall {
-                    Text("Hotkeys und Login-Start laufen am stabilsten, wenn Blitztext aus /Applications gestartet wird.")
+                    Text("Hotkeys und Login-Start laufen am stabilsten, wenn Quick Text aus /Applications gestartet wird.")
                         .font(.system(size: 10.5))
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
@@ -237,7 +237,7 @@ struct AccessSettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 SectionLabel(text: "Beim Anmelden")
 
-                Toggle("Blitztext automatisch starten", isOn: Binding(
+                Toggle("Quick Text automatisch starten", isOn: Binding(
                     get: { launchAtLoginService.isEnabled },
                     set: { launchAtLoginService.setEnabled($0) }
                 ))
@@ -263,7 +263,7 @@ struct AccessSettingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 SectionLabel(text: "Hinweis")
 
-                Text("Fuer direktes Einfuegen: Blitztext einmal nach /Applications legen und danach Mikrofon sowie Bedienungshilfen erlauben.")
+                Text("Fuer direktes Einfuegen: Quick Text einmal nach /Applications legen und danach Mikrofon sowie Bedienungshilfen erlauben.")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -282,7 +282,7 @@ struct AccessSettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 SectionLabel(text: "Sauber Entfernen")
 
-                Text("Vor dem Löschen Blitztext erst auf diesem Mac bereinigen. So verschwinden Anmeldestart und lokale Daten sauber aus dem Weg.")
+                Text("Vor dem Löschen Quick Text erst auf diesem Mac bereinigen. So verschwinden Anmeldestart und lokale Daten sauber aus dem Weg.")
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -291,7 +291,7 @@ struct AccessSettingsView: View {
                     Toggle("Zugangsdaten und Einstellungen dieses Macs löschen", isOn: $deleteLocalDataOnCleanup)
                         .toggleStyle(.switch)
 
-                    Text("Danach Blitztext beenden und die App aus /Applications löschen. Bereits verwaiste alte Login-Items können in den Systemeinstellungen einmalig manuell entfernt werden.")
+                    Text("Danach Quick Text beenden und die App aus /Applications löschen. Bereits verwaiste alte Login-Items können in den Systemeinstellungen einmalig manuell entfernt werden.")
                         .font(.system(size: 10.5))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -425,11 +425,11 @@ struct AccessSettingsView: View {
     private var installationHeadline: String {
         switch currentInstallLocation {
         case .applications:
-            return "Blitztext liegt am richtigen Ort."
+            return "Quick Text liegt am richtigen Ort."
         case .userApplications:
-            return "Blitztext liegt noch in ~/Applications."
+            return "Quick Text liegt noch in ~/Applications."
         case .outsideApplications:
-            return "Blitztext liegt noch nicht in /Applications."
+            return "Quick Text liegt noch nicht in /Applications."
         case .unknown:
             return "Der Installationsort konnte nicht sicher erkannt werden."
         }
@@ -438,21 +438,21 @@ struct AccessSettingsView: View {
     private var installationDetail: String {
         switch currentInstallLocation {
         case .applications:
-            if BlitztextInstallLocationService.otherInstalledBundleURLs.isEmpty {
+            if QuickTextInstallLocationService.otherInstalledBundleURLs.isEmpty {
                 return "Für stabile Login-Items und Updates nur diese Kopie weiterverwenden."
             }
             return "Diese Kopie ist korrekt. Zusätzliche Kopien solltest du später entfernen."
         case .userApplications:
-            return "Fuer stabile Hotkeys und Login-Items sollte Blitztext nur aus /Applications laufen."
+            return "Fuer stabile Hotkeys und Login-Items sollte Quick Text nur aus /Applications laufen."
         case .outsideApplications:
-            return "Verschiebe Blitztext einmal nach /Applications, damit Anmeldestart und Hotkeys sauber bleiben."
+            return "Verschiebe Quick Text einmal nach /Applications, damit Anmeldestart und Hotkeys sauber bleiben."
         case .unknown:
-            return "Öffne Blitztext möglichst direkt aus /Applications."
+            return "Öffne Quick Text möglichst direkt aus /Applications."
         }
     }
 
     private func refreshInstallState() {
-        currentInstallLocation = BlitztextInstallLocationService.currentInstallLocation
+        currentInstallLocation = QuickTextInstallLocationService.currentInstallLocation
         installActionErrorText = nil
     }
 
@@ -460,7 +460,7 @@ struct AccessSettingsView: View {
         installActionErrorText = nil
 
         do {
-            try BlitztextInstallLocationService.moveToApplicationsAndRelaunch()
+            try QuickTextInstallLocationService.moveToApplicationsAndRelaunch()
         } catch {
             installActionErrorText = error.localizedDescription
         }
@@ -471,8 +471,8 @@ struct AccessSettingsView: View {
         cleanupErrorText = nil
 
         let report = deleteLocalDataOnCleanup
-            ? BlitztextCleanupService.cleanupUserData()
-            : BlitztextCleanupService.removeLaunchAtLoginRegistration()
+            ? QuickTextCleanupService.cleanupUserData()
+            : QuickTextCleanupService.removeLaunchAtLoginRegistration()
 
         KeychainService.invalidateCache()
         launchAtLoginService.refresh()
@@ -485,12 +485,12 @@ struct AccessSettingsView: View {
 
         if report.failedItems.isEmpty {
             cleanupStatusText = deleteLocalDataOnCleanup
-                ? "Anmeldestart und lokale Daten wurden bereinigt. Jetzt Blitztext beenden und aus /Applications löschen."
-                : "Anmeldestart wurde deaktiviert. Jetzt Blitztext beenden und aus /Applications löschen."
+                ? "Anmeldestart und lokale Daten wurden bereinigt. Jetzt Quick Text beenden und aus /Applications löschen."
+                : "Anmeldestart wurde deaktiviert. Jetzt Quick Text beenden und aus /Applications löschen."
             showCleanupOptions = false
 
             let urlsToReveal = report.knownInstallBundleURLs.isEmpty
-                ? [BlitztextInstallLocationService.bundleURL]
+                ? [QuickTextInstallLocationService.bundleURL]
                 : report.knownInstallBundleURLs
             revealInFinder(urls: urlsToReveal)
             return
@@ -626,9 +626,9 @@ struct CustomizeSettingsView: View {
                 }
             }
 
-            // MARK: Blitztext+
+            // MARK: Quick Text+
             VStack(alignment: .leading, spacing: 10) {
-                SectionLabel(text: "Blitztext+")
+                SectionLabel(text: "Quick Text+")
 
                 // Tone
                 VStack(alignment: .leading, spacing: 8) {
@@ -681,9 +681,9 @@ struct CustomizeSettingsView: View {
                 }
             }
 
-            // MARK: Blitztext $%&!
+            // MARK: Quick Text $%&!
             VStack(alignment: .leading, spacing: 10) {
-                SectionLabel(text: "Blitztext $%&!")
+                SectionLabel(text: "Quick Text $%&!")
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Eigene Anweisung")
@@ -710,9 +710,9 @@ struct CustomizeSettingsView: View {
                 }
             }
 
-            // MARK: Blitztext :)
+            // MARK: Quick Text :)
             VStack(alignment: .leading, spacing: 10) {
-                SectionLabel(text: "Blitztext :)")
+                SectionLabel(text: "Quick Text :)")
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Emoji-Dichte")

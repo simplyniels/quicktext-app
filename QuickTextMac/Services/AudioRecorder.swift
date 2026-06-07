@@ -15,7 +15,7 @@ final class AudioRecorder: NSObject, AVAudioRecorderDelegate {
 
     private func makeRecordingURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("blitztext-\(UUID().uuidString).m4a")
+            .appendingPathComponent("quicktext-\(UUID().uuidString).m4a")
     }
 
     func startRecording() {

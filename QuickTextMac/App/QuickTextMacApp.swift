@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct BlitztextMacApp: App {
+struct QuickTextMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {

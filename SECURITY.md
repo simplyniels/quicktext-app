@@ -1,6 +1,6 @@
 # Security Policy
 
-Blitztext macOS Preview is experimental software.
+Quick Text is experimental software.
 
 It is provided as-is, without warranty, support guarantees, or production-readiness claims.
 
@@ -28,9 +28,11 @@ Include:
 ## Security Notes
 
 - The app sends audio and text directly to OpenAI when you use the remote workflows.
-- Your OpenAI API key is stored in the user's macOS Keychain.
+- Your OpenAI API key is stored in the user's macOS Keychain or Windows Credential Manager.
 - Temporary audio files may exist briefly during processing.
 - Accessibility permission allows the app to paste text into the current app.
+- On Windows, direct paste uses the clipboard and simulated `Ctrl+V`; it cannot
+  control an elevated target application from a non-elevated Quick Text process.
 - The app currently runs **without** the macOS App Sandbox. This is a deliberate trade-off for the preview: the menubar workflow needs Accessibility-based paste into arbitrary frontmost apps, system-wide hotkeys, and Application Support paths for local WhisperKit models, all of which are awkward or impossible inside a strict sandbox. Hardened Runtime is enabled, and the entitlements are limited to microphone input and outbound network access. Reintroducing the sandbox is on the roadmap once these flows are reworked.
 
 Do not use this preview for confidential or regulated data without your own review.

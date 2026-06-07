@@ -1,6 +1,6 @@
 # Local Models
 
-Blitztext can run transcription locally with WhisperKit/CoreML. The app does not bundle a speech model, but it can download the selected compatible model from Hugging Face into the local cache.
+Quick Text can run transcription locally with WhisperKit/CoreML. The app does not bundle a speech model, but it can download the selected compatible model from Hugging Face into the local cache.
 
 ## Recommended First Model
 
@@ -11,7 +11,7 @@ Use Whisper Small for the first local test. It is multilingual, supports German,
 Local cache path:
 
 ```text
-~/Library/Application Support/Blitztext/models/whisperkit/openai_whisper-small_216MB
+~/Library/Application Support/Quick Text/models/whisperkit/openai_whisper-small_216MB
 ```
 
 ## Other Compatible Models
@@ -25,9 +25,9 @@ The app detects installed model folders that contain `AudioEncoder.mlmodelc`, `M
 
 ## Install From The App
 
-Open Blitztext, go to **Settings > Anpassen**, choose a local model, and click **Installieren**. You can also switch on **Sicherer Lokaler Modus** from the main popover; if the selected model is missing, Blitztext starts the download and installs it into the local cache.
+Open Quick Text, go to **Settings > Anpassen**, choose a local model, and click **Installieren**. You can also switch on **Sicherer Lokaler Modus** from the main popover; if the selected model is missing, Quick Text starts the download and installs it into the local cache.
 
-After the model is installed, the Blitztext transcription workflow can run in local mode. The rewriting workflows still use OpenAI, so they are paused while secure local mode is active.
+After the model is installed, the Quick Text transcription workflow can run in local mode. The rewriting workflows still use OpenAI, so they are paused while secure local mode is active.
 
 ## Optional Manual Install
 
@@ -40,7 +40,7 @@ python3 -m pip install --upgrade "huggingface_hub[cli]"
 Create the local model cache:
 
 ```bash
-mkdir -p "$HOME/Library/Application Support/Blitztext/models/whisperkit"
+mkdir -p "$HOME/Library/Application Support/Quick Text/models/whisperkit"
 ```
 
 Download the recommended first model:
@@ -48,14 +48,14 @@ Download the recommended first model:
 ```bash
 hf download argmaxinc/whisperkit-coreml \
   --include 'openai_whisper-small_216MB/*' \
-  --local-dir "$HOME/Library/Application Support/Blitztext/models/whisperkit" \
+  --local-dir "$HOME/Library/Application Support/Quick Text/models/whisperkit" \
   --max-workers 4
 ```
 
 Expected folder layout:
 
 ```text
-~/Library/Application Support/Blitztext/models/whisperkit/
+~/Library/Application Support/Quick Text/models/whisperkit/
   openai_whisper-small_216MB/
     AudioEncoder.mlmodelc/
     MelSpectrogram.mlmodelc/
@@ -67,6 +67,6 @@ If the folder is nested differently, the app will not detect the model.
 ## Notes
 
 - First use can be slower because the model has to load and prewarm.
-- Local transcription avoids sending audio to OpenAI for the Blitztext workflow.
+- Local transcription avoids sending audio to OpenAI for the Quick Text workflow.
 - The app currently supports local transcription only, not local rewriting.
 - Models are downloaded on demand so the repository and app package stay small and auditable.

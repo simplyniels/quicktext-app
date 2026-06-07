@@ -4,12 +4,12 @@ This is a preview roadmap, not a promise.
 
 ## Current Scope
 
-- macOS menubar app
+- native macOS menu-bar and Windows 11 tray apps
 - local recording and hotkeys
 - direct OpenAI API calls with a user-provided API key
 - transcription, rewriting, calmer-message, and emoji workflows
 - no hosted backend
-- no other platforms
+- no platforms other than macOS and Windows 11
 - no packaged public release
 
 ## Next Useful Work
@@ -18,7 +18,7 @@ This is a preview roadmap, not a promise.
 - Improve credential setup, validation, and recovery UX.
 - Add a small automated test layer around prompt construction and text quality filters.
 - Add provider boundaries so OpenAI and future local transcription can be swapped more cleanly.
-- Prototype local transcription with WhisperKit or whisper.cpp.
+- Improve local transcription with WhisperKit on macOS and whisper.cpp on Windows.
 - Reduce the Accessibility blast radius, ideally by moving synthetic paste into a smaller helper with narrower responsibilities.
 - Add stronger supply-chain checks around downloaded local speech models.
 - Add signed and notarized release builds when the project is ready for non-developer users.

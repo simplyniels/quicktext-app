@@ -29,7 +29,7 @@ struct MenuBarView: View {
                 // Top bar
                 HStack {
                     HStack(spacing: 6) {
-                        Text("Blitztext")
+                        Text("Quick Text")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(.secondary)
 
@@ -80,7 +80,7 @@ struct MenuBarView: View {
                 Color(nsColor: .controlBackgroundColor).opacity(0.5)
             )
 
-            if BlitztextInstallLocationService.shouldOfferMoveToApplications {
+            if QuickTextInstallLocationService.shouldOfferMoveToApplications {
                 installHintBanner
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
@@ -223,7 +223,7 @@ struct MenuBarView: View {
             return "\(appState.selectedLocalModelDisplayName) ist noch nicht installiert."
         }
 
-        return "Blitztext nutzt gerade die OpenAI-Transkription."
+        return "Quick Text nutzt gerade die OpenAI-Transkription."
     }
 
     private var accessibilityHintBanner: some View {
@@ -314,7 +314,7 @@ struct MenuBarView: View {
     private var onboardingPage: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Willkommen bei Blitztext")
+                Text("Willkommen bei Quick Text")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.primary)
 
@@ -359,13 +359,13 @@ struct MenuBarView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
-                    if BlitztextInstallLocationService.shouldOfferMoveToApplications {
+                    if QuickTextInstallLocationService.shouldOfferMoveToApplications {
                         onboardingInstallCard
                     }
 
                     onboardingStep(number: "1", title: "OpenAI Key speichern", detail: "Öffne die Einstellungen und trage deinen eigenen OpenAI API Key ein.")
                     onboardingStep(number: "2", title: "Berechtigungen erlauben", detail: "Mikrofon und Bedienungshilfen für das Einfügen freigeben.")
-                    onboardingStep(number: "3", title: "Workflow wählen", detail: "Blitztext oder einen der Verbesserer-Workflows direkt aus der Menüleiste starten.")
+                    onboardingStep(number: "3", title: "Workflow wählen", detail: "Quick Text oder einen der Verbesserer-Workflows direkt aus der Menüleiste starten.")
                 }
 
                 HStack(spacing: 8) {
@@ -480,7 +480,7 @@ struct MenuBarView: View {
                 .frame(width: 18, height: 18)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Lege Blitztext zuerst nach /Applications.")
+                Text("Lege Quick Text zuerst nach /Applications.")
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(.primary)
 

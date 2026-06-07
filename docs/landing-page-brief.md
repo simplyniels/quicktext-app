@@ -1,6 +1,6 @@
 # Landing Page Brief
 
-Domain: `blitztext.app`
+Domain: `quicktext.app`
 
 Goal: a very small landing page for an experimental open-source macOS preview.
 
@@ -8,7 +8,7 @@ Goal: a very small landing page for an experimental open-source macOS preview.
 
 Headline:
 
-> Blitztext macOS Preview
+> Quick Text Preview
 
 Subline:
 
@@ -28,7 +28,7 @@ Secondary CTA:
 
 Small line:
 
-> Bring your own OpenAI API key. Optional local transcription. No hosted Blitztext backend.
+> Bring your own OpenAI API key. Optional local transcription. No hosted Quick Text backend.
 
 ## Sections
 
@@ -54,7 +54,7 @@ Small line:
 4. Privacy, plainly
    - online workflows send audio and text to OpenAI
    - secure local mode keeps transcription on device
-   - no public Blitztext backend
+   - no public Quick Text backend
    - rewriting still uses OpenAI
    - do your own review before sensitive use
 

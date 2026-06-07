@@ -71,7 +71,7 @@ final class MenuBarStatusController {
     private func tooltip(for status: MenuBarStatus) -> String {
         switch status {
         case .idle:
-            return "Blitztext ist bereit"
+            return "Quick Text ist bereit"
         case .recording(let type):
             return "\(type.displayName): Aufnahme läuft"
         case .processing(let type):
@@ -80,12 +80,12 @@ final class MenuBarStatusController {
             if let type {
                 return "\(type.displayName): Fertig"
             }
-            return "Blitztext: Fertig"
+            return "Quick Text: Fertig"
         case .error(let type):
             if let type {
                 return "\(type.displayName): Fehler"
             }
-            return "Blitztext: Fehler"
+            return "Quick Text: Fehler"
         }
     }
 

@@ -30,3 +30,9 @@ Secrets.swift
 
 # Tooling
 node_modules/
+QuickTextWindows/bin/
+QuickTextWindows/obj/
+QuickTextSetup/bin/
+QuickTextSetup/obj/
+QuickText-Windows-11-*/
+QuickText-Windows-11-*.zip

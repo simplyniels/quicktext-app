@@ -1,7 +1,7 @@
 import Foundation
 import ServiceManagement
 
-enum BlitztextCleanupService {
+enum QuickTextCleanupService {
     struct CleanupItemFailure: Identifiable, Equatable {
         let id = UUID()
         let url: URL
@@ -58,7 +58,7 @@ enum BlitztextCleanupService {
     }
 
     static func knownInstallBundleURLs() -> [URL] {
-        BlitztextInstallLocationService.knownInstallBundleURLs
+        QuickTextInstallLocationService.knownInstallBundleURLs
     }
 
     static func cleanup(paths: [URL], unregisterLaunchAtLogin: Bool) -> CleanupReport {
@@ -71,7 +71,7 @@ enum BlitztextCleanupService {
             } catch {
                 failedItems.append(
                     CleanupItemFailure(
-                        url: BlitztextInstallLocationService.bundleURL,
+                        url: QuickTextInstallLocationService.bundleURL,
                         errorDescription: error.localizedDescription
                     )
                 )
@@ -95,7 +95,7 @@ enum BlitztextCleanupService {
         return CleanupReport(
             removedURLs: removedURLs,
             failedItems: failedItems,
-            knownInstallBundleURLs: BlitztextInstallLocationService.otherInstalledBundleURLs
+            knownInstallBundleURLs: QuickTextInstallLocationService.otherInstalledBundleURLs
         )
     }
 

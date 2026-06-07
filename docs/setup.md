@@ -20,8 +20,8 @@ brew install xcodegen
 ## 2. Clone And Build
 
 ```bash
-git clone https://github.com/cmagnussen/blitztext-app.git
-cd blitztext-app
+git clone https://github.com/cmagnussen/quicktext-app.git
+cd quicktext-app
 ./build.sh --debug
 ```
 
@@ -49,10 +49,10 @@ You can skip this step if you only want to test local transcription with a local
 
 ## 4. Optional Local Transcription
 
-To use secure local transcription, choose a compatible WhisperKit CoreML model in the app and click **Installieren**. Blitztext stores models in:
+To use secure local transcription, choose a compatible WhisperKit CoreML model in the app and click **Installieren**. Quick Text stores models in:
 
 ```text
-~/Library/Application Support/Blitztext/models/whisperkit/
+~/Library/Application Support/Quick Text/models/whisperkit/
 ```
 
 Recommended first model: `openai_whisper-small_216MB`.
@@ -65,7 +65,7 @@ The app needs Microphone permission to record audio.
 
 For automatic paste into the previous app, grant Accessibility permission in macOS System Settings. Without it, you can still copy and paste manually.
 
-Blitztext does not need Full Disk Access. Auto-paste uses the Accessibility permission because the app simulates Cmd+V after putting the result on the clipboard.
+Quick Text does not need Full Disk Access. Auto-paste uses the Accessibility permission because the app simulates Cmd+V after putting the result on the clipboard.
 
 ## Troubleshooting
 
@@ -73,8 +73,8 @@ Blitztext does not need Full Disk Access. Auto-paste uses the Accessibility perm
 - If the build cannot find XcodeGen, install it explicitly with `brew install xcodegen`.
 - If online transcription fails immediately, check whether the API key is present and valid.
 - If secure local mode is disabled, check whether a WhisperKit model is installed in the expected folder.
-- If transcription works but paste does not, this is not an OpenAI billing issue. Check **Privacy & Security -> Accessibility**, restart Blitztext after changing the permission, and make sure the cursor is focused in a text field before starting the workflow.
-- If macOS shows multiple Blitztext entries under Accessibility, remove or disable stale entries, run the app from the final location (`/Applications` if you used `./build.sh --install`), then grant the permission again.
+- If transcription works but paste does not, this is not an OpenAI billing issue. Check **Privacy & Security -> Accessibility**, restart Quick Text after changing the permission, and make sure the cursor is focused in a text field before starting the workflow.
+- If macOS shows multiple Quick Text entries under Accessibility, remove or disable stale entries, run the app from the final location (`/Applications` if you used `./build.sh --install`), then grant the permission again.
 - If the target app blocks synthetic paste or the target app was not detected, the result still stays on the clipboard so you can press Cmd+V manually.
 - If audio is missing, check Microphone permission and macOS input settings.
 - If you see OpenAI errors, verify model access and account billing.
