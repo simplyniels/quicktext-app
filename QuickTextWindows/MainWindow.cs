@@ -14,6 +14,7 @@ public sealed class MainWindow : Window
     private readonly StackPanel body = new() { Margin = new Thickness(24, 18, 24, 18) };
     private readonly TextBlock statusText = Text("Bereit", 20, FontWeights.Bold, Palette.Text);
     private readonly Border panel = new();
+    private readonly ScrollViewer scroll = new();
 
     private AudioRecorder? recorder;
     private WorkflowType? activeType;
@@ -27,10 +28,10 @@ public sealed class MainWindow : Window
     public MainWindow()
     {
         Title = "Quick Text";
-        Width = 390;
-        Height = 560;
-        MinWidth = 370;
-        MinHeight = 520;
+        Width = 526;
+        Height = 657;
+        MinWidth = 526;
+        MinHeight = 657;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = Palette.WindowBackground;
         Closing += (_, e) => { e.Cancel = true; HideRequested?.Invoke(this, EventArgs.Empty); };
@@ -47,12 +48,10 @@ public sealed class MainWindow : Window
             Opacity = 0.18
         };
 
-        var scroll = new ScrollViewer
-        {
-            Content = body,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            BorderThickness = new Thickness(0)
-        };
+        scroll.Content = body;
+        scroll.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+        scroll.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+        scroll.BorderThickness = new Thickness(0);
         panel.Child = scroll;
         Content = new Grid { Margin = new Thickness(18), Children = { panel } };
         ShowMain();
@@ -65,6 +64,7 @@ public sealed class MainWindow : Window
 
     private void ShowMain()
     {
+        scroll.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
         body.Children.Clear();
         AddMainHeader();
         AddModePanel();
@@ -244,6 +244,7 @@ public sealed class MainWindow : Window
 
     private void ShowSettings()
     {
+        scroll.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
         body.Children.Clear();
         AddSettingsHeader();
         AddSegmentedTabs();

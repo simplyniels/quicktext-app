@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Quick Text</AssemblyName>
+    <ApplicationIcon>Resources\QuickText.ico</ApplicationIcon>
     <RootNamespace>QuickTextWindows</RootNamespace>
     <Version>1.5.0</Version>
     <FileVersion>1.5.0.15</FileVersion>

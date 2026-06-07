@@ -53,7 +53,7 @@ public sealed class App : System.Windows.Application
         window.HideRequested += (_, _) => window.Hide();
         tray = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? SystemIcons.Application,
             Text = "Quick Text ist bereit",
             Visible = true,
             ContextMenuStrip = MakeMenu()

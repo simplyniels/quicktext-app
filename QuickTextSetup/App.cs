@@ -2,6 +2,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Effects;
 using Microsoft.Win32;
 
 namespace QuickTextSetup;
@@ -17,52 +20,120 @@ public sealed class App : Application
 
 public sealed class SetupWindow : Window
 {
-    private readonly TextBlock status = new() { Text = "Bereit zur Installation.", Margin = new Thickness(0, 12, 0, 0) };
-    private readonly CheckBox launchAfterInstall = new() { Content = "Quick Text nach der Installation starten", IsChecked = true };
-    private readonly CheckBox startAtLogin = new() { Content = "Quick Text automatisch mit Windows starten", IsChecked = false };
+    private readonly TextBlock status = Text("Bereit zur Installation.", 12.5, FontWeights.SemiBold, Palette.Muted);
+    private bool launchAfterInstall = true;
+    private bool startAtLogin;
+    private Border launchToggle = null!;
+    private Border startupToggle = null!;
 
     public SetupWindow()
     {
         Title = "Quick Text Setup";
-        Width = 440;
-        Height = 330;
+        Width = 526;
+        Height = 600;
+        MinWidth = 526;
+        MinHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         ResizeMode = ResizeMode.NoResize;
+        Background = Palette.WindowBackground;
 
-        var root = new StackPanel { Margin = new Thickness(22) };
-        root.Children.Add(new TextBlock { Text = "Quick Text", FontSize = 28, FontWeight = FontWeights.SemiBold });
-        root.Children.Add(new TextBlock
+        var panel = new Border
         {
-            Text = "Installiert die Windows-11-App fuer Sprache zu Text, Hotkeys und automatisches Einfuegen.",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 8, 0, 16)
-        });
-        root.Children.Add(launchAfterInstall);
-        root.Children.Add(startAtLogin);
+            CornerRadius = new CornerRadius(26),
+            Background = Palette.Panel,
+            BorderBrush = Palette.Border,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(30, 26, 30, 24),
+            Effect = new DropShadowEffect
+            {
+                Color = Color.FromRgb(30, 70, 90),
+                BlurRadius = 26,
+                ShadowDepth = 8,
+                Opacity = 0.18
+            }
+        };
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 22, 0, 0) };
-        var install = new Button { Content = "Installieren", MinWidth = 110, Padding = new Thickness(10, 6, 10, 6), IsDefault = true };
-        var cancel = new Button { Content = "Abbrechen", MinWidth = 90, Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(8, 0, 0, 0), IsCancel = true };
-        install.Click += (_, _) => Install();
+        var root = new StackPanel();
+        root.Children.Add(Text("Quick Text", 18, FontWeights.SemiBold, Palette.Muted));
+
+        var ready = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 22, 0, 24)
+        };
+        ready.Children.Add(new Border
+        {
+            Width = 11,
+            Height = 11,
+            CornerRadius = new CornerRadius(7),
+            Background = Palette.Success,
+            Margin = new Thickness(0, 8, 10, 0)
+        });
+        ready.Children.Add(Text("Setup", 22, FontWeights.Bold, Palette.Text));
+        root.Children.Add(ready);
+
+        var intro = Card();
+        var introStack = new StackPanel();
+        introStack.Children.Add(Text("Quick Text für Windows 11", 18, FontWeights.Bold, Palette.Text));
+        introStack.Children.Add(Text(
+            "Installiert Sprache-zu-Text, globale Hotkeys und automatisches Einfügen für den aktuellen Benutzer.",
+            13.5,
+            FontWeights.Medium,
+            Palette.Muted,
+            new Thickness(0, 6, 0, 0)));
+        intro.Child = introStack;
+        root.Children.Add(intro);
+
+        root.Children.Add(SectionTitle("Installation"));
+        launchToggle = TogglePill(launchAfterInstall, () =>
+        {
+            launchAfterInstall = !launchAfterInstall;
+            RefreshToggle(launchToggle, launchAfterInstall);
+        });
+        root.Children.Add(SettingRow("Quick Text danach starten", launchToggle));
+
+        startupToggle = TogglePill(startAtLogin, () =>
+        {
+            startAtLogin = !startAtLogin;
+            RefreshToggle(startupToggle, startAtLogin);
+        });
+        root.Children.Add(SettingRow("Automatisch mit Windows starten", startupToggle));
+
+        var buttons = new Grid { Margin = new Thickness(0, 26, 0, 0) };
+        buttons.ColumnDefinitions.Add(new ColumnDefinition());
+        buttons.ColumnDefinitions.Add(new ColumnDefinition());
+        var cancel = ButtonShell("Abbrechen", Palette.SegmentBackground, Palette.Text);
+        cancel.Margin = new Thickness(0, 0, 6, 0);
         cancel.Click += (_, _) => Close();
-        buttons.Children.Add(install);
+        var install = ButtonShell("Installieren", Palette.Accent, Brushes.White);
+        install.Margin = new Thickness(6, 0, 0, 0);
+        install.IsDefault = true;
+        install.Click += (_, _) => Install();
+        Grid.SetColumn(install, 1);
         buttons.Children.Add(cancel);
+        buttons.Children.Add(install);
         root.Children.Add(buttons);
+
+        status.HorizontalAlignment = HorizontalAlignment.Center;
+        status.Margin = new Thickness(0, 18, 0, 0);
         root.Children.Add(status);
 
-        Content = root;
+        panel.Child = root;
+        Content = new Grid { Margin = new Thickness(18), Children = { panel } };
     }
 
     private void Install()
     {
         try
         {
+            status.Text = "Quick Text wird installiert ...";
             var setupDir = AppContext.BaseDirectory;
             var sourceDir = Path.Combine(setupDir, "app");
             var sourceExe = Path.Combine(sourceDir, "Quick Text.exe");
             if (!File.Exists(sourceExe))
             {
-                throw new InvalidOperationException("App-Payload fehlt. Erwartet wurde der Ordner 'app' neben Quick Text Setup.exe.");
+                throw new InvalidOperationException("App-Payload fehlt. Bitte den vollständigen entpackten Setup-Ordner verwenden.");
             }
 
             var installDir = Path.Combine(
@@ -74,10 +145,10 @@ public sealed class SetupWindow : Window
 
             var installedExe = Path.Combine(installDir, "Quick Text.exe");
             CreateShortcut(installedExe);
-            ConfigureStartup(installedExe, startAtLogin.IsChecked == true);
+            ConfigureStartup(installedExe, startAtLogin);
 
-            status.Text = $"Installiert nach {installDir}";
-            if (launchAfterInstall.IsChecked == true)
+            status.Text = "Installation abgeschlossen.";
+            if (launchAfterInstall)
             {
                 Process.Start(new ProcessStartInfo(installedExe) { UseShellExecute = true });
             }
@@ -91,6 +162,80 @@ public sealed class SetupWindow : Window
             MessageBox.Show(ex.Message, "Quick Text Setup", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
+    private static Border Card() => new()
+    {
+        CornerRadius = new CornerRadius(14),
+        Background = Palette.Card,
+        BorderBrush = Palette.Border,
+        BorderThickness = new Thickness(1),
+        Padding = new Thickness(16),
+        Margin = new Thickness(0, 0, 0, 6)
+    };
+
+    private static TextBlock SectionTitle(string value) =>
+        Text(value.ToUpperInvariant(), 13, FontWeights.Bold, Palette.Section, new Thickness(0, 22, 0, 12));
+
+    private static Grid SettingRow(string label, UIElement control)
+    {
+        var row = new Grid { Margin = new Thickness(0, 4, 0, 12) };
+        row.ColumnDefinitions.Add(new ColumnDefinition());
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.Children.Add(Text(label, 15, FontWeights.Medium, Palette.Text));
+        Grid.SetColumn(control, 1);
+        row.Children.Add(control);
+        return row;
+    }
+
+    private static Border TogglePill(bool enabled, Action action)
+    {
+        var toggle = new Border
+        {
+            Width = 58,
+            Height = 32,
+            CornerRadius = new CornerRadius(18),
+            Cursor = Cursors.Hand
+        };
+        RefreshToggle(toggle, enabled);
+        toggle.MouseLeftButtonUp += (_, _) => action();
+        return toggle;
+    }
+
+    private static void RefreshToggle(Border toggle, bool enabled)
+    {
+        toggle.Background = enabled ? Palette.Accent : Palette.SegmentBackground;
+        toggle.Child = new Border
+        {
+            Width = 25,
+            Height = 25,
+            CornerRadius = new CornerRadius(14),
+            Background = Brushes.White,
+            HorizontalAlignment = enabled ? HorizontalAlignment.Right : HorizontalAlignment.Left,
+            Margin = new Thickness(4)
+        };
+    }
+
+    private static Button ButtonShell(string label, Brush background, Brush foreground) => new()
+    {
+        Content = label,
+        Background = background,
+        Foreground = foreground,
+        BorderBrush = Brushes.Transparent,
+        Padding = new Thickness(14, 10, 14, 10),
+        FontSize = 14,
+        FontWeight = FontWeights.SemiBold,
+        Cursor = Cursors.Hand
+    };
+
+    private static TextBlock Text(string value, double size, FontWeight weight, Brush color, Thickness? margin = null) => new()
+    {
+        Text = value,
+        FontSize = size,
+        FontWeight = weight,
+        Foreground = color,
+        TextWrapping = TextWrapping.Wrap,
+        Margin = margin ?? new Thickness(0)
+    };
 
     private static void CopyDirectory(string source, string destination)
     {
@@ -128,5 +273,22 @@ public sealed class SetupWindow : Window
         using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
         if (enabled) key.SetValue("Quick Text", $"\"{target}\" --background");
         else key.DeleteValue("Quick Text", false);
+    }
+
+    private static class Palette
+    {
+        public static readonly Brush WindowBackground = new LinearGradientBrush(
+            Color.FromRgb(31, 151, 204),
+            Color.FromRgb(133, 224, 238),
+            90);
+        public static readonly Brush Panel = new SolidColorBrush(Color.FromRgb(199, 242, 248));
+        public static readonly Brush Card = new SolidColorBrush(Color.FromArgb(88, 160, 217, 228));
+        public static readonly Brush Border = new SolidColorBrush(Color.FromArgb(72, 58, 116, 137));
+        public static readonly Brush SegmentBackground = new SolidColorBrush(Color.FromArgb(94, 100, 177, 203));
+        public static readonly Brush Accent = new SolidColorBrush(Color.FromRgb(0, 115, 255));
+        public static readonly Brush Success = new SolidColorBrush(Color.FromRgb(43, 193, 80));
+        public static readonly Brush Text = new SolidColorBrush(Color.FromRgb(37, 58, 67));
+        public static readonly Brush Muted = new SolidColorBrush(Color.FromRgb(74, 112, 128));
+        public static readonly Brush Section = new SolidColorBrush(Color.FromRgb(61, 104, 123));
     }
 }
