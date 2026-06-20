@@ -26,6 +26,8 @@ The debug APK is written to
 3. Tap **Floating Bubble aktivieren**, select Quick Text under installed
    accessibility apps, and enable the service.
 4. Choose the language and workflow, then save.
+5. Under **Darstellung**, choose **Auto**, **Hell**, or **Dunkel**. Auto follows
+   the Android system appearance.
 
 Open a regular text field in a messaging, mail, browser, or notes app. When the
 software keyboard appears, Quick Text places a purple bubble above it. Tap the

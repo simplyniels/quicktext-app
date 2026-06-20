@@ -6,41 +6,60 @@ import 'package:flutter/services.dart';
 
 void main() => runApp(const QuickTextApp());
 
+final quickTextThemeMode = ValueNotifier<ThemeMode>(ThemeMode.system);
+
+ThemeMode themeModeFromSetting(String value) => switch (value) {
+  'light' => ThemeMode.light,
+  'dark' => ThemeMode.dark,
+  _ => ThemeMode.system,
+};
+
+ThemeData quickTextTheme(Brightness brightness) {
+  const seed = Color(0xFF1677FF);
+  final dark = brightness == Brightness.dark;
+  final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
+    brightness: brightness,
+    scaffoldBackgroundColor: dark
+        ? const Color(0xFF0D1118)
+        : const Color(0xFFF7F9FC),
+    fontFamily: 'sans-serif',
+    cardTheme: CardThemeData(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: dark ? const Color(0xFF171D27) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(24)),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: dark ? const Color(0xFF222A36) : const Color(0xFFF1F5FA),
+      border: const OutlineInputBorder(
+        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
+    ),
+  );
+}
+
 class QuickTextApp extends StatelessWidget {
   const QuickTextApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFF6656F5);
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Quick Text',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seed,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF8F7FB),
-        fontFamily: 'sans-serif',
-        cardTheme: const CardThemeData(
-          margin: EdgeInsets.zero,
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(24)),
-          ),
-        ),
-        inputDecorationTheme: const InputDecorationTheme(
-          filled: true,
-          fillColor: Color(0xFFF4F2F8),
-          border: OutlineInputBorder(
-            borderSide: BorderSide.none,
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-          ),
-        ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: quickTextThemeMode,
+      builder: (context, mode, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Quick Text',
+        theme: quickTextTheme(Brightness.light),
+        darkTheme: quickTextTheme(Brightness.dark),
+        themeMode: mode,
+        home: const HomePage(),
       ),
-      home: const HomePage(),
     );
   }
 }
@@ -68,6 +87,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Timer? _recordingTimer;
   String _language = 'de';
   String _workflow = 'transcription';
+  String _themeMode = 'system';
 
   @override
   void initState() {
@@ -102,9 +122,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _apiKey = status['apiKey'] == true;
         _language = status['language'] as String? ?? 'de';
         _workflow = status['workflow'] as String? ?? 'transcription';
+        _themeMode = status['themeMode'] as String? ?? 'system';
         _termsController.text = status['customTerms'] as String? ?? '';
         _busy = false;
       });
+      quickTextThemeMode.value = themeModeFromSetting(_themeMode);
     } on PlatformException {
       if (mounted) setState(() => _busy = false);
     }
@@ -118,6 +140,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       'language': _language,
       'workflow': _workflow,
       'customTerms': _termsController.text,
+      'themeMode': _themeMode,
     });
     _keyController.clear();
     await _refresh();
@@ -210,7 +233,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6656F5),
+                    color: const Color(0xFF1677FF),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(
@@ -245,14 +268,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF7667FF), Color(0xFF4F3FD8)],
+                  colors: [Color(0xFF2F8EFF), Color(0xFF0B5FCF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x336656F5),
+                    color: Color(0x331677FF),
                     blurRadius: 26,
                     offset: Offset(0, 12),
                   ),
@@ -270,7 +293,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                     child: const Icon(
                       Icons.mic_rounded,
-                      color: Color(0xFF6656F5),
+                      color: Color(0xFF1677FF),
                       size: 34,
                     ),
                   ),
@@ -316,7 +339,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         decoration: BoxDecoration(
                           color: _recording
                               ? const Color(0xFFFF4F67)
-                              : const Color(0xFF6656F5),
+                              : const Color(0xFF1677FF),
                           shape: BoxShape.circle,
                           boxShadow: _recording
                               ? const [
@@ -358,7 +381,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF4F2F8),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
@@ -521,6 +546,45 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         hintText: 'Quick Text, Blackboat, …',
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Darstellung',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 10),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(
+                          value: 'system',
+                          icon: Icon(Icons.brightness_auto_outlined),
+                          label: Text('Auto'),
+                        ),
+                        ButtonSegment(
+                          value: 'light',
+                          icon: Icon(Icons.light_mode_outlined),
+                          label: Text('Hell'),
+                        ),
+                        ButtonSegment(
+                          value: 'dark',
+                          icon: Icon(Icons.dark_mode_outlined),
+                          label: Text('Dunkel'),
+                        ),
+                      ],
+                      selected: {_themeMode},
+                      onSelectionChanged: (value) {
+                        final selection = value.first;
+                        setState(() => _themeMode = selection);
+                        quickTextThemeMode.value = themeModeFromSetting(
+                          selection,
+                        );
+                        unawaited(
+                          _channel.invokeMethod('saveSettings', {
+                            'themeMode': selection,
+                          }),
+                        );
+                      },
+                      showSelectedIcon: false,
+                    ),
                   ],
                 ),
               ),
@@ -634,7 +698,7 @@ class _SetupStep extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: done
                       ? const Color(0xFFE7F8EE)
-                      : const Color(0xFFEEEAFE),
+                      : const Color(0xFFE8F2FF),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -647,7 +711,7 @@ class _SetupStep extends StatelessWidget {
                       : Text(
                           number,
                           style: const TextStyle(
-                            color: Color(0xFF6656F5),
+                            color: Color(0xFF1677FF),
                             fontWeight: FontWeight.w800,
                           ),
                         ),

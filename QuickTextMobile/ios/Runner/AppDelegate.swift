@@ -43,6 +43,7 @@ import UIKit
         "language": settings.string(forKey: "language") ?? "de",
         "workflow": settings.string(forKey: "workflow") ?? "transcription",
         "customTerms": settings.string(forKey: "custom_terms") ?? "",
+        "themeMode": settings.string(forKey: "theme_mode") ?? "system",
       ])
     case "saveSettings":
       guard let arguments = call.arguments as? [String: Any] else {
@@ -53,9 +54,10 @@ import UIKit
         do { try KeychainStore.save(key.trimmingCharacters(in: .whitespacesAndNewlines)) }
         catch { result(FlutterError(code: "keychain", message: "API-Key konnte nicht gespeichert werden", details: nil)); return }
       }
-      settings.set(arguments["language"] as? String, forKey: "language")
-      settings.set(arguments["workflow"] as? String, forKey: "workflow")
-      settings.set(arguments["customTerms"] as? String, forKey: "custom_terms")
+      if let language = arguments["language"] as? String { settings.set(language, forKey: "language") }
+      if let workflow = arguments["workflow"] as? String { settings.set(workflow, forKey: "workflow") }
+      if let terms = arguments["customTerms"] as? String { settings.set(terms, forKey: "custom_terms") }
+      if let theme = arguments["themeMode"] as? String { settings.set(theme, forKey: "theme_mode") }
       result(true)
     case "requestPermissions":
       if #available(iOS 17.0, *) {

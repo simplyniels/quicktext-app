@@ -27,12 +27,14 @@ class MainActivity : FlutterActivity() {
                     "language" to store.language,
                     "workflow" to store.workflow,
                     "customTerms" to store.customTerms,
+                    "themeMode" to store.themeMode,
                 ))
                 "saveSettings" -> {
                     call.argument<String>("apiKey")?.takeIf { it.isNotBlank() }?.let(store::saveApiKey)
                     call.argument<String>("language")?.let { store.language = it }
                     call.argument<String>("workflow")?.let { store.workflow = it }
                     call.argument<String>("customTerms")?.let { store.customTerms = it }
+                    call.argument<String>("themeMode")?.let { store.themeMode = it }
                     result.success(true)
                 }
                 "requestPermissions" -> {

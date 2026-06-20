@@ -9,13 +9,13 @@ final class KeyboardViewController: UIInputViewController {
   }
 
   private func buildInterface() {
-    let purple = UIColor(red: 0.40, green: 0.34, blue: 0.96, alpha: 1)
-    view.backgroundColor = UIColor(red: 0.972, green: 0.968, blue: 0.988, alpha: 1)
+    let blue = UIColor.systemBlue
+    view.backgroundColor = UIColor.secondarySystemBackground
 
     let title = UILabel()
     title.text = "Quick Text"
     title.font = .systemFont(ofSize: 18, weight: .bold)
-    title.textColor = UIColor(red: 0.16, green: 0.14, blue: 0.20, alpha: 1)
+    title.textColor = .label
 
     let subtitle = UILabel()
     subtitle.text = "Systemdiktat nutzen oder Quick-Text-Ergebnis einfügen."
@@ -45,12 +45,12 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     let recordButton = UIButton(type: .system)
-    recordButton.setTitle("  Systemmikrofon unten rechts", for: .normal)
-    recordButton.setImage(UIImage(systemName: "mic.fill"), for: .normal)
+    recordButton.setTitle("  Tippe das Mikrofon unten rechts", for: .normal)
+    recordButton.setImage(UIImage(systemName: "sparkles"), for: .normal)
     recordButton.tintColor = .white
     recordButton.setTitleColor(.white, for: .normal)
     recordButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
-    recordButton.backgroundColor = purple
+    recordButton.backgroundColor = blue
     recordButton.layer.cornerRadius = 14
     recordButton.widthAnchor.constraint(equalToConstant: 280).isActive = true
     recordButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
@@ -59,10 +59,10 @@ final class KeyboardViewController: UIInputViewController {
     let pasteButton = UIButton(type: .system)
     pasteButton.setTitle("  Letztes Diktat einfügen", for: .normal)
     pasteButton.setImage(UIImage(systemName: "doc.on.clipboard"), for: .normal)
-    pasteButton.tintColor = purple
-    pasteButton.setTitleColor(purple, for: .normal)
+    pasteButton.tintColor = blue
+    pasteButton.setTitleColor(blue, for: .normal)
     pasteButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
-    pasteButton.backgroundColor = UIColor(red: 0.92, green: 0.90, blue: 1.0, alpha: 1)
+    pasteButton.backgroundColor = UIColor.tertiarySystemFill
     pasteButton.layer.cornerRadius = 14
     pasteButton.widthAnchor.constraint(equalToConstant: 280).isActive = true
     pasteButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
@@ -98,7 +98,7 @@ final class KeyboardViewController: UIInputViewController {
 
   @objc private func showMicrophoneHint() {
     statusLabel.text = "Tippe jetzt unten rechts auf das iOS-Mikrofon  ↘︎"
-    statusLabel.textColor = UIColor(red: 0.40, green: 0.34, blue: 0.96, alpha: 1)
+    statusLabel.textColor = .systemBlue
     UISelectionFeedbackGenerator().selectionChanged()
   }
 

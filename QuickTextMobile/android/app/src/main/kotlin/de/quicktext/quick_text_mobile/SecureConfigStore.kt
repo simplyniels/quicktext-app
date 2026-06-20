@@ -27,6 +27,10 @@ class SecureConfigStore(private val context: Context) {
         get() = prefs.getString("custom_terms", "") ?: ""
         set(value) { prefs.edit().putString("custom_terms", value).apply() }
 
+    var themeMode: String
+        get() = prefs.getString("theme_mode", "system") ?: "system"
+        set(value) { prefs.edit().putString("theme_mode", value).apply() }
+
     fun hasApiKey(): Boolean = prefs.contains("api_key")
 
     fun saveApiKey(value: String) {

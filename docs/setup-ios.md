@@ -43,6 +43,8 @@ App Store provisioning profiles for both `de.quicktext.mobile` and
    iOS Keychain with this-device-only protection.
 2. Grant microphone access.
 3. Choose language and workflow.
+   Under **Darstellung**, choose **Auto**, **Hell**, or **Dunkel**. Auto follows
+   the iOS appearance. The keyboard extension always follows iOS directly.
 4. Open **Settings → General → Keyboard → Keyboards → Add New Keyboard** and
    select Quick Text.
 5. Open Quick Text in that list and enable **Allow Full Access**. This is needed
