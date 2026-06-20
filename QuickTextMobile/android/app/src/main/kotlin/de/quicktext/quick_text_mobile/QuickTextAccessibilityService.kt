@@ -22,7 +22,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -35,6 +37,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import java.io.File
 import java.util.concurrent.Executors
+import kotlin.math.abs
 import kotlin.math.max
 
 class QuickTextAccessibilityService : AccessibilityService() {
@@ -46,9 +49,15 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private var recordingFile: File? = null
     private var recordingStartedAt = 0L
     private var state = State.IDLE
-    private var lastEditableFocusAt = 0L
     private var timer: TextView? = null
     private var pulseAnimator: ObjectAnimator? = null
+    private var overlayParams: WindowManager.LayoutParams? = null
+    private var anchorX = -1
+    private var anchorY = -1
+    private val positionPrefs by lazy { getSharedPreferences("quick_text_overlay", Context.MODE_PRIVATE) }
+    private val hideOverlayDelayed = Runnable {
+        if (state == State.IDLE && !hasValidInputTarget()) hideOverlay()
+    }
     private val timerTick = object : Runnable {
         override fun run() {
             if (state != State.RECORDING) return
@@ -66,27 +75,23 @@ class QuickTextAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null || state != State.IDLE) return
-        if (event.packageName?.toString() == packageName) {
-            hideOverlay()
-            return
-        }
-        val focused = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-        val keyboardVisible = windows.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
-        val valid = focused?.isEditable == true && !isSensitive(focused) && keyboardVisible
-        if (valid) {
-            lastEditableFocusAt = SystemClock.elapsedRealtime()
+        if (hasValidInputTarget()) {
+            main.removeCallbacks(hideOverlayDelayed)
             showIdleBubble()
-        } else if (SystemClock.elapsedRealtime() - lastEditableFocusAt > 700) {
-            hideOverlay()
+        } else {
+            main.removeCallbacks(hideOverlayDelayed)
+            main.postDelayed(hideOverlayDelayed, 1_200)
         }
     }
 
     override fun onInterrupt() {
+        main.removeCallbacks(hideOverlayDelayed)
         cancelRecording()
         hideOverlay()
     }
 
     override fun onDestroy() {
+        main.removeCallbacks(hideOverlayDelayed)
         cancelRecording()
         hideOverlay()
         executor.shutdownNow()
@@ -98,13 +103,14 @@ class QuickTextAccessibilityService : AccessibilityService() {
         val button = ImageButton(this).apply {
             setImageResource(android.R.drawable.ic_btn_speak_now)
             setColorFilter(Color.WHITE)
-            setPadding(dp(17), dp(17), dp(17), dp(17))
+            setPadding(dp(13), dp(13), dp(13), dp(13))
             elevation = dp(12).toFloat()
             contentDescription = "Quick Text starten"
-            background = rounded(0xFF6D5DFCL.toInt(), 32)
+            background = rounded(0xFF1677FF.toInt(), 27)
             setOnClickListener { startRecording() }
         }
-        replaceOverlay(button, 64, 64)
+        addDragBehavior(button)
+        replaceOverlay(button, 54, 54)
     }
 
     private fun showRecordingPill() {
@@ -264,6 +270,12 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private fun replaceOverlay(view: View, widthDp: Int, heightDp: Int) {
         hideOverlay()
         overlay = view
+        val minimumY = keyboardBottomOffset() + dp(88)
+        val maximumY = resources.displayMetrics.heightPixels - dp(heightDp + 24)
+        if (anchorX < 0) anchorX = positionPrefs.getInt("x", dp(16))
+        if (anchorY < 0) anchorY = positionPrefs.getInt("y", minimumY + dp(32))
+        anchorX = anchorX.coerceIn(0, (resources.displayMetrics.widthPixels - dp(widthDp)).coerceAtLeast(0))
+        anchorY = anchorY.coerceIn(minimumY, maximumY.coerceAtLeast(minimumY))
         val params = WindowManager.LayoutParams(
             dp(widthDp), dp(heightDp),
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
@@ -271,10 +283,58 @@ class QuickTextAccessibilityService : AccessibilityService() {
             android.graphics.PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.BOTTOM or Gravity.END
-            x = dp(18)
-            y = keyboardBottomOffset()
+            x = anchorX
+            y = anchorY
         }
+        overlayParams = params
         windowManager.addView(view, params)
+    }
+
+    private fun addDragBehavior(view: View) {
+        val touchSlop = ViewConfiguration.get(this).scaledTouchSlop
+        var downX = 0f
+        var downY = 0f
+        var startX = 0
+        var startY = 0
+        var dragged = false
+        view.setOnTouchListener { target, event ->
+            val params = overlayParams ?: return@setOnTouchListener false
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    main.removeCallbacks(hideOverlayDelayed)
+                    downX = event.rawX
+                    downY = event.rawY
+                    startX = params.x
+                    startY = params.y
+                    dragged = false
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = event.rawX - downX
+                    val deltaY = event.rawY - downY
+                    if (abs(deltaX) > touchSlop || abs(deltaY) > touchSlop) dragged = true
+                    val minY = keyboardBottomOffset() + dp(72)
+                    val maxX = (resources.displayMetrics.widthPixels - target.width).coerceAtLeast(0)
+                    val maxY = (resources.displayMetrics.heightPixels - target.height - dp(24)).coerceAtLeast(minY)
+                    params.x = (startX - deltaX.toInt()).coerceIn(0, maxX)
+                    params.y = (startY - deltaY.toInt()).coerceIn(minY, maxY)
+                    anchorX = params.x
+                    anchorY = params.y
+                    runCatching { windowManager.updateViewLayout(target, params) }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (dragged) {
+                        positionPrefs.edit().putInt("x", anchorX).putInt("y", anchorY).apply()
+                    } else {
+                        target.performClick()
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> true
+                else -> false
+            }
+        }
     }
 
     private fun keyboardBottomOffset(): Int {
@@ -290,7 +350,15 @@ class QuickTextAccessibilityService : AccessibilityService() {
         pulseAnimator = null
         overlay?.let { runCatching { windowManager.removeView(it) } }
         overlay = null
+        overlayParams = null
         timer = null
+    }
+
+    private fun hasValidInputTarget(): Boolean {
+        val focused = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return false
+        if (focused.packageName?.toString() == packageName) return false
+        val keyboardVisible = windows.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+        return focused.isEditable && !isSensitive(focused) && keyboardVisible
     }
 
     private fun isSensitive(node: AccessibilityNodeInfo): Boolean {
