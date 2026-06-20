@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -58,6 +61,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _apiKey = false;
   bool _busy = true;
   bool _showKey = false;
+  bool _recording = false;
+  bool _processing = false;
+  int _recordingSeconds = 0;
+  String? _lastResult;
+  Timer? _recordingTimer;
   String _language = 'de';
   String _workflow = 'transcription';
 
@@ -73,6 +81,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _keyController.dispose();
     _termsController.dispose();
+    _recordingTimer?.cancel();
     super.dispose();
   }
 
@@ -119,9 +128,77 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _toggleRecording() async {
+    if (_processing) return;
+    try {
+      if (!_recording) {
+        await _channel.invokeMethod('startRecording');
+        _recordingTimer?.cancel();
+        setState(() {
+          _recording = true;
+          _recordingSeconds = 0;
+          _lastResult = null;
+        });
+        _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted) return;
+          setState(() => _recordingSeconds++);
+          if (_recordingSeconds >= 60 && _recording) _toggleRecording();
+        });
+      } else {
+        _recordingTimer?.cancel();
+        setState(() {
+          _recording = false;
+          _processing = true;
+        });
+        final text = await _channel.invokeMethod<String>('stopRecording');
+        if (!mounted) return;
+        setState(() {
+          _processing = false;
+          _lastResult = text;
+        });
+      }
+    } on PlatformException catch (error) {
+      _recordingTimer?.cancel();
+      if (!mounted) return;
+      setState(() {
+        _recording = false;
+        _processing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message ?? 'Aufnahme fehlgeschlagen')),
+      );
+    }
+  }
+
+  Future<void> _openKeyboardSetup() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Quick-Text-Tastatur aktivieren'),
+        content: const Text(
+          'Öffne Einstellungen → Allgemein → Tastatur → Tastaturen → Neue Tastatur hinzufügen. Wähle Quick Text und aktiviere anschließend „Vollen Zugriff erlauben“, damit die Tastatur den von Quick Text kopierten Text einfügen kann.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Später'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _channel.invokeMethod('openKeyboardSettings');
+            },
+            child: const Text('Einstellungen öffnen'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ready = _microphone && _accessibility && _apiKey;
+    final isIOS = Platform.isIOS;
+    final ready = _microphone && _apiKey && (isIOS || _accessibility);
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -198,8 +275,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                   ),
                   const SizedBox(height: 22),
-                  const Text(
-                    'Deine Stimme, direkt\nim Textfeld.',
+                  Text(
+                    isIOS
+                        ? 'Sprich in Quick Text.\nFüge es überall ein.'
+                        : 'Deine Stimme, direkt\nim Textfeld.',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 30,
@@ -209,7 +288,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    ready
+                    isIOS
+                        ? 'Nimm dein Diktat hier auf. Quick Text transkribiert, verbessert und kopiert es; die Quick-Text-Tastatur setzt es anschließend am Cursor ein.'
+                        : ready
                         ? 'Tippe in WhatsApp, Mail oder eine andere App. Die Quick-Text-Bubble erscheint automatisch über deiner Tastatur.'
                         : 'Drei kurze Schritte aktivieren die schwebende Spracheingabe in deinen Apps.',
                     style: const TextStyle(
@@ -221,6 +302,91 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ],
               ),
             ),
+            if (isIOS) ...[
+              const SizedBox(height: 18),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: _recording ? 88 : 76,
+                        height: _recording ? 88 : 76,
+                        decoration: BoxDecoration(
+                          color: _recording
+                              ? const Color(0xFFFF4F67)
+                              : const Color(0xFF6656F5),
+                          shape: BoxShape.circle,
+                          boxShadow: _recording
+                              ? const [
+                                  BoxShadow(
+                                    color: Color(0x55FF4F67),
+                                    blurRadius: 28,
+                                    spreadRadius: 5,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: IconButton(
+                          onPressed: ready ? _toggleRecording : null,
+                          icon: Icon(
+                            _recording ? Icons.stop_rounded : Icons.mic_rounded,
+                            color: Colors.white,
+                            size: 38,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _processing
+                            ? 'Transkribiere …'
+                            : _recording
+                            ? '${_recordingSeconds ~/ 60}:${(_recordingSeconds % 60).toString().padLeft(2, '0')} · Zum Beenden tippen'
+                            : ready
+                            ? 'Tippen und sprechen'
+                            : 'Bitte zuerst Setup abschließen',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      if (_processing) ...[
+                        const SizedBox(height: 12),
+                        const LinearProgressIndicator(),
+                      ],
+                      if (_lastResult != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4F2F8),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'In Zwischenablage kopiert',
+                                style: TextStyle(
+                                  color: Color(0xFF197544),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _lastResult!,
+                                maxLines: 5,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 26),
             const _SectionTitle(
               'Einrichtung',
@@ -231,7 +397,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               number: '1',
               title: 'OpenAI verbinden',
               subtitle: _apiKey
-                  ? 'API-Key sicher im Android Keystore gespeichert'
+                  ? 'API-Key sicher im ${isIOS ? 'iOS Keychain' : 'Android Keystore'} gespeichert'
                   : 'Für whisper-1 und die Text-Workflows',
               done: _apiKey,
               child: TextField(
@@ -270,13 +436,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             const SizedBox(height: 10),
             _SetupStep(
               number: '3',
-              title: 'Floating Bubble aktivieren',
-              subtitle: _accessibility
+              title: isIOS
+                  ? 'Quick-Text-Tastatur aktivieren'
+                  : 'Floating Bubble aktivieren',
+              subtitle: isIOS
+                  ? 'Fügt das letzte Diktat am Cursor ein'
+                  : _accessibility
                   ? 'Quick Text ist als Bedienungshilfe aktiv'
                   : 'Erkennt Textfelder und fügt nur dein Diktat ein',
-              done: _accessibility,
-              action: () => _channel.invokeMethod('openAccessibility'),
-              actionLabel: _accessibility ? 'Öffnen' : 'Aktivieren',
+              done: isIOS ? false : _accessibility,
+              action: isIOS
+                  ? _openKeyboardSetup
+                  : () => _channel.invokeMethod('openAccessibility'),
+              actionLabel: isIOS
+                  ? 'Anleitung'
+                  : _accessibility
+                  ? 'Öffnen'
+                  : 'Aktivieren',
             ),
             const SizedBox(height: 28),
             const _SectionTitle(
@@ -369,8 +545,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Quick Text liest keine Nachrichten aus anderen Apps. Der Accessibility-Service reagiert ausschließlich auf fokussierte, nicht-sensible Textfelder. Audio wird nur nach Tippen auf die Bubble aufgenommen und direkt an OpenAI gesendet.',
+            Text(
+              isIOS
+                  ? 'Quick Text nimmt Audio nur nach Tippen auf die Mikrofontaste auf und sendet es direkt an OpenAI. Die Tastatur liest die Zwischenablage ausschließlich nach deinem Tap auf „Einfügen“.'
+                  : 'Quick Text liest keine Nachrichten aus anderen Apps. Der Accessibility-Service reagiert ausschließlich auf fokussierte, nicht-sensible Textfelder. Audio wird nur nach Tippen auf die Bubble aufgenommen und direkt an OpenAI gesendet.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Color(0xFF777280),

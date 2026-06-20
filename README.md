@@ -1,6 +1,6 @@
 # Quick Text
 
-Quick Text is an experimental open-source macOS menu-bar, Windows 11 tray, and Android floating-dictation app for turning speech into text.
+Quick Text is an experimental open-source macOS menu-bar, Windows 11 tray, Android floating-dictation, and iOS companion-keyboard app for turning speech into text.
 
 It is intentionally small and unfinished. The goal is to make a real workflow visible and hackable: press a hotkey, speak, get text back, optionally rewrite it, and paste it into the app you were using.
 
@@ -17,7 +17,8 @@ This is a learning and experimentation project, not a polished product.
 
 ## Important Preview Notes
 
-- Native macOS and Windows 11 implementations plus a Flutter/Kotlin Android app.
+- Native macOS and Windows 11 implementations plus a Flutter mobile app with
+  native Kotlin Android integration and a native Swift iOS keyboard extension.
 - Bring your own OpenAI API key.
 - No hosted Quick Text backend is included or provided.
 - A hosted family-server and mobile-app extension is planned in
@@ -124,6 +125,19 @@ Text bubble when a regular text field and the software keyboard are active.
 See [docs/setup-android.md](docs/setup-android.md) for setup, privacy behavior,
 and device testing.
 
+### Build And Run On iOS
+
+```bash
+cd QuickTextMobile
+flutter run
+```
+
+The iOS containing app records, transcribes, optionally rewrites, and copies the
+result. Its native Quick Text keyboard can insert that clipboard result at the
+cursor after the user enables the keyboard and Full Access. iOS does not permit
+a system-wide floating bubble or microphone access inside third-party keyboard
+extensions. See [docs/setup-ios.md](docs/setup-ios.md).
+
 ## Permissions
 
 Quick Text asks for:
@@ -166,8 +180,9 @@ QuickTextWindows/
   App.cs        Tray lifecycle
   MainWindow.cs Main UI, settings, and workflow coordination
 QuickTextMobile/
-  lib/          Flutter onboarding and settings app
+  lib/          Shared Flutter onboarding, settings, and iOS recording UI
   android/      Native Kotlin accessibility overlay, recording, and insertion
+  ios/          Native Swift recording bridge and Quick Text keyboard extension
 build.sh        Local build script
 build-windows.ps1 Windows build, publish, and install script
 docs/           Setup, privacy, roadmap, preflight, landing page notes
