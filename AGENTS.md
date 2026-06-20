@@ -7,6 +7,7 @@ Windows implementations:
 
 - `QuickTextMac/`: SwiftUI/AppKit implementation for macOS 14+
 - `QuickTextWindows/`: WPF implementation for Windows 11 and .NET 8
+- `QuickTextServer/`: Next.js/Vercel family server backed by Supabase
 
 Keep both apps functionally aligned. A workflow, setting, API model, prompt, or
 user-facing behavior changed on one platform should normally be changed on the
@@ -16,6 +17,8 @@ other platform in the same pull request.
 
 - Never commit API keys, recordings, transcripts, or other user data.
 - OpenAI keys must stay in the platform credential store.
+- Hosted mode must never expose the server's OpenAI key or Supabase service
+  role key to any client.
 - Online transcription uses `whisper-1`.
 - Text improvement and emoji workflows use `gpt-4o-mini`.
 - The calmer-message workflow uses `gpt-4o`.
@@ -49,6 +52,9 @@ and the adjacent `app/` payload.
 - Prefer platform-native APIs and UI conventions.
 - Keep platform-specific code inside its platform directory.
 - Preserve the preview/no-hosted-backend data flow.
+- If implementing hosted or mobile support, follow
+  `docs/hosted-mobile-architecture.md` and keep direct-key and local modes
+  available as fallbacks.
 - Update `README.md` and the relevant setup document when requirements or setup
   steps change.
 - Treat build output (`bin/`, `obj/`, `.derivedData-*`, `.app`, publish folders)

@@ -30,6 +30,8 @@ Secrets.swift
 
 # Tooling
 node_modules/
+.next/
+.vercel/
 QuickTextWindows/bin/
 QuickTextWindows/obj/
 QuickTextSetup/bin/

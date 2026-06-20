@@ -1,6 +1,6 @@
 # Quick Text
 
-Quick Text is an experimental open-source macOS menu-bar and Windows 11 tray app for turning speech into text.
+Quick Text is an experimental open-source macOS menu-bar, Windows 11 tray, and Android floating-dictation app for turning speech into text.
 
 It is intentionally small and unfinished. The goal is to make a real workflow visible and hackable: press a hotkey, speak, get text back, optionally rewrite it, and paste it into the app you were using.
 
@@ -17,9 +17,11 @@ This is a learning and experimentation project, not a polished product.
 
 ## Important Preview Notes
 
-- Native macOS and Windows 11 implementations.
+- Native macOS and Windows 11 implementations plus a Flutter/Kotlin Android app.
 - Bring your own OpenAI API key.
 - No hosted Quick Text backend is included or provided.
+- A hosted family-server and mobile-app extension is planned in
+  [docs/hosted-mobile-architecture.md](docs/hosted-mobile-architecture.md).
 - In online mode, audio and text are sent directly from the app to the OpenAI API.
 - Optional local transcription via WhisperKit/CoreML if you install a compatible model locally.
 - `./build.sh` creates a locally ad-hoc-signed development app. No notarized release binary is provided.
@@ -109,6 +111,19 @@ For native ARM64 and x64 setup builds:
 See [docs/setup-windows.md](docs/setup-windows.md) for installation, Windows
 hotkeys, microphone permissions, and optional local transcription.
 
+### Build And Run On Android
+
+```bash
+cd QuickTextMobile
+flutter run
+```
+
+Android 13 or newer is required. The containing app stores the OpenAI API key
+in Android Keystore. Its native Accessibility Service shows a floating Quick
+Text bubble when a regular text field and the software keyboard are active.
+See [docs/setup-android.md](docs/setup-android.md) for setup, privacy behavior,
+and device testing.
+
 ## Permissions
 
 Quick Text asks for:
@@ -150,6 +165,9 @@ QuickTextWindows/
   Services/     Recording, OpenAI, hotkeys, credentials, local transcription
   App.cs        Tray lifecycle
   MainWindow.cs Main UI, settings, and workflow coordination
+QuickTextMobile/
+  lib/          Flutter onboarding and settings app
+  android/      Native Kotlin accessibility overlay, recording, and insertion
 build.sh        Local build script
 build-windows.ps1 Windows build, publish, and install script
 docs/           Setup, privacy, roadmap, preflight, landing page notes

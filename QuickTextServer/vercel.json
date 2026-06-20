@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "app/api/v1/transcriptions/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/v1/rewrite/route.ts": {
+      "maxDuration": 300
+    }
+  }
+}
