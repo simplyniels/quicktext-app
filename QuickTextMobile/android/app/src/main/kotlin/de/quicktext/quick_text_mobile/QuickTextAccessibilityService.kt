@@ -1,7 +1,5 @@
 package de.quicktext.quick_text_mobile
 
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.app.NotificationChannel
@@ -18,6 +16,7 @@ import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaRecorder
 import android.os.Bundle
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -25,6 +24,7 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -49,20 +49,37 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private var recordingFile: File? = null
     private var recordingStartedAt = 0L
     private var state = State.IDLE
+    private var lastEditorSeenAt = 0L
     private var timer: TextView? = null
-    private var pulseAnimator: ObjectAnimator? = null
+    private var waveform: WaveformView? = null
     private var overlayParams: WindowManager.LayoutParams? = null
     private var anchorX = -1
     private var anchorY = -1
     private val positionPrefs by lazy { getSharedPreferences("quick_text_overlay", Context.MODE_PRIVATE) }
-    private val hideOverlayDelayed = Runnable {
-        if (state == State.IDLE && !hasValidInputTarget()) hideOverlay()
+    private val hideOverlayDelayed: Runnable = object : Runnable {
+        override fun run() {
+            if (state != State.IDLE) return
+            val activePackage = rootInActiveWindow?.packageName?.toString()
+            when {
+                activePackage == packageName -> hideOverlay()
+                hasValidInputTarget() -> {
+                    lastEditorSeenAt = SystemClock.elapsedRealtime()
+                    showIdleBubble()
+                }
+                overlay != null && isKeyboardVisible() &&
+                    SystemClock.elapsedRealtime() - lastEditorSeenAt < 30_000 ->
+                    main.postDelayed(this, 1_500)
+                else -> hideOverlay()
+            }
+        }
     }
     private val timerTick = object : Runnable {
         override fun run() {
             if (state != State.RECORDING) return
             val seconds = (SystemClock.elapsedRealtime() - recordingStartedAt) / 1000
             timer?.text = "%d:%02d".format(seconds / 60, seconds % 60)
+            val amplitude = runCatching { (recorder?.maxAmplitude ?: 0) / 32_767f }.getOrDefault(0f)
+            waveform?.setAmplitude(amplitude)
             if (seconds >= 60) stopAndTranscribe() else main.postDelayed(this, 250)
         }
     }
@@ -75,7 +92,8 @@ class QuickTextAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null || state != State.IDLE) return
-        if (hasValidInputTarget()) {
+        if (isValidEditor(event.source) || hasValidInputTarget()) {
+            lastEditorSeenAt = SystemClock.elapsedRealtime()
             main.removeCallbacks(hideOverlayDelayed)
             showIdleBubble()
         } else {
@@ -101,8 +119,7 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private fun showIdleBubble() {
         if (overlay != null) return
         val button = ImageButton(this).apply {
-            setImageResource(android.R.drawable.ic_btn_speak_now)
-            setColorFilter(Color.WHITE)
+            setImageResource(R.drawable.ic_quick_text_mark)
             setPadding(dp(13), dp(13), dp(13), dp(13))
             elevation = dp(12).toFloat()
             contentDescription = "Quick Text starten"
@@ -121,18 +138,7 @@ class QuickTextAccessibilityService : AccessibilityService() {
             background = rounded(0xFF17151FL.toInt(), 32)
             elevation = dp(12).toFloat()
         }
-        val dot = TextView(this).apply {
-            text = "●"
-            textSize = 20f
-            setTextColor(0xFFFF5B6E.toInt())
-            gravity = Gravity.CENTER
-        }
-        pulseAnimator = ObjectAnimator.ofFloat(dot, View.ALPHA, 1f, 0.22f).apply {
-            duration = 520
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
-            start()
-        }
+        waveform = WaveformView(this)
         timer = TextView(this).apply {
             text = "0:00"
             textSize = 16f
@@ -148,7 +154,7 @@ class QuickTextAccessibilityService : AccessibilityService() {
             background = rounded(0xFFFF4F67.toInt(), 26)
             setOnClickListener { stopAndTranscribe() }
         }
-        pill.addView(dot, LinearLayout.LayoutParams(dp(32), dp(56)))
+        pill.addView(waveform, LinearLayout.LayoutParams(dp(52), dp(48)))
         pill.addView(timer, LinearLayout.LayoutParams(0, dp(56), 1f))
         pill.addView(stop, LinearLayout.LayoutParams(dp(52), dp(52)))
         replaceOverlay(pill, 210, 64)
@@ -346,19 +352,42 @@ class QuickTextAccessibilityService : AccessibilityService() {
     }
 
     private fun hideOverlay() {
-        pulseAnimator?.cancel()
-        pulseAnimator = null
         overlay?.let { runCatching { windowManager.removeView(it) } }
         overlay = null
         overlayParams = null
         timer = null
+        waveform = null
     }
 
     private fun hasValidInputTarget(): Boolean {
-        val focused = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return false
-        if (focused.packageName?.toString() == packageName) return false
-        val keyboardVisible = windows.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
-        return focused.isEditable && !isSensitive(focused) && keyboardVisible
+        val root = rootInActiveWindow ?: return false
+        root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.let {
+            if (isValidEditor(it)) return true
+        }
+        val queue = ArrayDeque<AccessibilityNodeInfo>()
+        queue.add(root)
+        var inspected = 0
+        while (queue.isNotEmpty() && inspected < 120) {
+            val node = queue.removeFirst()
+            inspected++
+            if ((node.isFocused || node.isAccessibilityFocused) && isValidEditor(node)) return true
+            repeat(node.childCount) { index -> node.getChild(index)?.let(queue::addLast) }
+        }
+        return false
+    }
+
+    private fun isValidEditor(node: AccessibilityNodeInfo?): Boolean {
+        if (node == null || node.packageName?.toString() == packageName || isSensitive(node)) return false
+        val canSetText = node.actionList.any { it.id == AccessibilityNodeInfo.ACTION_SET_TEXT }
+        val editTextClass = node.className?.toString()?.contains("EditText", ignoreCase = true) == true
+        return node.isEditable || canSetText || editTextClass
+    }
+
+    private fun isKeyboardVisible(): Boolean {
+        if (windows.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }) return true
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            windowManager.currentWindowMetrics.windowInsets.isVisible(WindowInsets.Type.ime())
+        } else false
     }
 
     private fun isSensitive(node: AccessibilityNodeInfo): Boolean {

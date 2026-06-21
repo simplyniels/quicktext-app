@@ -31,8 +31,9 @@ The debug APK is written to
 
 Open a regular text field in a messaging, mail, browser, or notes app. When the
 software keyboard appears, Quick Text places a blue bubble above it. Tap the
-bubble to record. The bubble becomes a recording pill with a timer and a red
-stop button. Stopping sends the recording to `whisper-1`; the selected optional
+bubble, marked with the Quick Text app symbol, to record. The bubble becomes a
+recording pill with a live, audio-responsive waveform, timer, and red stop
+button. Stopping sends the recording to `whisper-1`; the selected optional
 rewrite then uses `gpt-4o-mini` or `gpt-4o`.
 
 Drag the bubble to move it away from app controls such as Send or Attach. Quick
