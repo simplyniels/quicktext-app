@@ -12,6 +12,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.Color
+import android.graphics.Outline
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaRecorder
@@ -24,12 +25,14 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewOutlineProvider
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -119,11 +122,18 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private fun showIdleBubble() {
         if (overlay != null) return
         val button = ImageButton(this).apply {
-            setImageResource(R.drawable.ic_quick_text_mark)
-            setPadding(dp(13), dp(13), dp(13), dp(13))
+            setImageResource(R.mipmap.ic_launcher)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            setPadding(0, 0, 0, 0)
             elevation = dp(12).toFloat()
             contentDescription = "Quick Text starten"
-            background = rounded(0xFF1677FF.toInt(), 27)
+            background = null
+            outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    outline.setRoundRect(0, 0, view.width, view.height, dp(17).toFloat())
+                }
+            }
+            clipToOutline = true
             setOnClickListener { startRecording() }
         }
         addDragBehavior(button)

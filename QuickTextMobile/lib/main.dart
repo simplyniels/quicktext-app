@@ -8,6 +8,101 @@ void main() => runApp(const QuickTextApp());
 
 final quickTextThemeMode = ValueNotifier<ThemeMode>(ThemeMode.system);
 
+abstract final class QuickTextColors {
+  static const accent = Color(0xFFD27849);
+  static const accentLight = Color(0xFFE68B5A);
+  static const accentDark = Color(0xFFE0844F);
+  static const lightBackground = Color(0xFFFBF6EE);
+  static const lightSurface = Color(0xFFFFFCF7);
+  static const lightInput = Color(0xFFF4ECDC);
+  static const lightText = Color(0xFF23201B);
+  static const lightSecondary = Color(0xFF6B655B);
+  static const darkBackground = Color(0xFF0F0D0A);
+  static const darkSurface = Color(0xFF1A1612);
+  static const darkInput = Color(0xFF221D17);
+  static const darkText = Color(0xFFF6EFE3);
+  static const darkSecondary = Color(0xFFA89E8B);
+}
+
+class AuroraMicrophoneIcon extends StatelessWidget {
+  const AuroraMicrophoneIcon({super.key, this.size = 38});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: size,
+    child: CustomPaint(painter: _AuroraMicrophonePainter()),
+  );
+}
+
+class _AuroraMicrophonePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gradient = const LinearGradient(
+      colors: [Color(0xFFF0A078), Color(0xFFD27849)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(Offset.zero & size);
+    final fill = Paint()
+      ..shader = gradient
+      ..style = PaintingStyle.fill;
+    final stroke = Paint()
+      ..shader = gradient
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.095
+      ..strokeCap = StrokeCap.round;
+
+    final capsule = RRect.fromRectAndRadius(
+      Rect.fromLTRB(
+        size.width * 0.34,
+        size.height * 0.12,
+        size.width * 0.66,
+        size.height * 0.60,
+      ),
+      Radius.circular(size.width * 0.17),
+    );
+    canvas.drawRRect(capsule, fill);
+
+    final cradle = Path()
+      ..moveTo(size.width * 0.22, size.height * 0.45)
+      ..cubicTo(
+        size.width * 0.22,
+        size.height * 0.72,
+        size.width * 0.78,
+        size.height * 0.72,
+        size.width * 0.78,
+        size.height * 0.45,
+      );
+    canvas.drawPath(cradle, stroke);
+    canvas.drawLine(
+      Offset(size.width * 0.50, size.height * 0.71),
+      Offset(size.width * 0.50, size.height * 0.86),
+      stroke,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.36, size.height * 0.87),
+      Offset(size.width * 0.64, size.height * 0.87),
+      stroke,
+    );
+
+    final sparkle = Path()
+      ..moveTo(size.width * 0.82, size.height * 0.05)
+      ..lineTo(size.width * 0.86, size.height * 0.15)
+      ..lineTo(size.width * 0.96, size.height * 0.19)
+      ..lineTo(size.width * 0.86, size.height * 0.23)
+      ..lineTo(size.width * 0.82, size.height * 0.33)
+      ..lineTo(size.width * 0.78, size.height * 0.23)
+      ..lineTo(size.width * 0.68, size.height * 0.19)
+      ..lineTo(size.width * 0.78, size.height * 0.15)
+      ..close();
+    canvas.drawPath(sparkle, fill);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 ThemeMode themeModeFromSetting(String value) => switch (value) {
   'light' => ThemeMode.light,
   'dark' => ThemeMode.dark,
@@ -15,31 +110,101 @@ ThemeMode themeModeFromSetting(String value) => switch (value) {
 };
 
 ThemeData quickTextTheme(Brightness brightness) {
-  const seed = Color(0xFF1677FF);
   final dark = brightness == Brightness.dark;
-  final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+  final background = dark
+      ? QuickTextColors.darkBackground
+      : QuickTextColors.lightBackground;
+  final surface = dark
+      ? QuickTextColors.darkSurface
+      : QuickTextColors.lightSurface;
+  final foreground = dark
+      ? QuickTextColors.darkText
+      : QuickTextColors.lightText;
+  final secondary = dark
+      ? QuickTextColors.darkSecondary
+      : QuickTextColors.lightSecondary;
+  final accent = dark ? QuickTextColors.accentDark : QuickTextColors.accent;
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: accent,
+        brightness: brightness,
+        surface: surface,
+      ).copyWith(
+        primary: accent,
+        onPrimary: Colors.white,
+        onSurface: foreground,
+        surfaceContainerHighest: dark
+            ? QuickTextColors.darkInput
+            : QuickTextColors.lightInput,
+        outline: accent.withValues(alpha: 0.26),
+      );
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
     brightness: brightness,
-    scaffoldBackgroundColor: dark
-        ? const Color(0xFF0D1118)
-        : const Color(0xFFF7F9FC),
-    fontFamily: 'sans-serif',
+    scaffoldBackgroundColor: background,
+    fontFamily: 'Inter',
+    fontFamilyFallback: const ['SF Pro Text', 'Roboto', 'sans-serif'],
+    textTheme: ThemeData(brightness: brightness).textTheme.apply(
+      bodyColor: foreground,
+      displayColor: foreground,
+      fontFamily: 'Inter',
+      fontFamilyFallback: const ['SF Pro Text', 'Roboto', 'sans-serif'],
+    ),
     cardTheme: CardThemeData(
       margin: EdgeInsets.zero,
       elevation: 0,
-      color: dark ? const Color(0xFF171D27) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(24)),
+      color: surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(22)),
+        side: BorderSide(color: accent.withValues(alpha: dark ? 0.18 : 0.14)),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: dark ? const Color(0xFF222A36) : const Color(0xFFF1F5FA),
-      border: const OutlineInputBorder(
-        borderSide: BorderSide.none,
-        borderRadius: BorderRadius.all(Radius.circular(16)),
+      fillColor: dark ? QuickTextColors.darkInput : QuickTextColors.lightInput,
+      hintStyle: TextStyle(color: secondary.withValues(alpha: 0.78)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      border: OutlineInputBorder(
+        borderSide: BorderSide(color: accent.withValues(alpha: 0.16)),
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: accent.withValues(alpha: 0.16)),
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: accent, width: 1.5),
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: accent,
+        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+    ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? Colors.white : foreground,
+        ),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? accent
+              : Colors.transparent,
+        ),
+        side: WidgetStatePropertyAll(
+          BorderSide(color: accent.withValues(alpha: 0.28)),
+        ),
       ),
     ),
   );
@@ -225,16 +390,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 36),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 40),
           children: [
             Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1677FF),
-                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      colors: [
+                        QuickTextColors.accentLight,
+                        QuickTextColors.accent,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(17),
                   ),
                   child: const Icon(
                     Icons.graphic_eq_rounded,
@@ -242,20 +414,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Quick Text',
                         style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Source Serif 4',
+                          fontFamilyFallback: ['Georgia', 'serif'],
+                          fontSize: 27,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
                         'Sprich. Sende. Fertig.',
-                        style: TextStyle(color: Color(0xFF777280)),
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? QuickTextColors.darkSecondary
+                              : QuickTextColors.lightSecondary,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
@@ -263,21 +442,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 _StatusPill(ready: ready),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(26, 26, 26, 30),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF2F8EFF), Color(0xFF0B5FCF)],
+                  colors: [
+                    Color(0xFFE89163),
+                    QuickTextColors.accent,
+                    Color(0xFFC26B3F),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x331677FF),
-                    blurRadius: 26,
-                    offset: Offset(0, 12),
+                    color: Color(0x33D27849),
+                    blurRadius: 44,
+                    offset: Offset(0, 20),
                   ),
                 ],
               ),
@@ -285,17 +468,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 70,
-                    height: 70,
+                    width: 78,
+                    height: 78,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.mic_rounded,
-                      color: Color(0xFF1677FF),
-                      size: 34,
-                    ),
+                    child: isIOS
+                        ? const Icon(
+                            Icons.mic_rounded,
+                            color: QuickTextColors.accent,
+                            size: 34,
+                          )
+                        : const Center(child: AuroraMicrophoneIcon()),
                   ),
                   const SizedBox(height: 22),
                   Text(
@@ -304,9 +489,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         : 'Deine Stimme, direkt\nim Textfeld.',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 30,
+                      fontFamily: 'Source Serif 4',
+                      fontFamilyFallback: const ['Georgia', 'serif'],
+                      fontSize: 34,
                       height: 1.08,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -317,9 +504,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         ? 'Tippe in WhatsApp, Mail oder eine andere App. Die Quick-Text-Bubble erscheint automatisch über deiner Tastatur.'
                         : 'Drei kurze Schritte aktivieren die schwebende Spracheingabe in deinen Apps.',
                     style: const TextStyle(
-                      color: Color(0xFFE8E4FF),
-                      fontSize: 15,
-                      height: 1.45,
+                      color: Color(0xFFFFF5EB),
+                      fontSize: 16,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -339,7 +526,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         decoration: BoxDecoration(
                           color: _recording
                               ? const Color(0xFFFF4F67)
-                              : const Color(0xFF1677FF),
+                              : QuickTextColors.accent,
                           shape: BoxShape.circle,
                           boxShadow: _recording
                               ? const [
@@ -412,12 +599,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ),
             ],
-            const SizedBox(height: 26),
+            const SizedBox(height: 30),
             const _SectionTitle(
               'Einrichtung',
               'Einmal erledigen, danach überall diktieren.',
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             _SetupStep(
               number: '1',
               title: 'OpenAI verbinden',
@@ -430,6 +617,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 obscureText: !_showKey,
                 autocorrect: false,
                 enableSuggestions: false,
+                style: const TextStyle(
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 13,
+                ),
                 decoration: InputDecoration(
                   hintText: _apiKey
                       ? 'Neuen Key eingeben, um ihn zu ersetzen'
@@ -445,7 +636,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             _SetupStep(
               number: '2',
               title: 'Mikrofon erlauben',
@@ -458,7 +649,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   : () => _channel.invokeMethod('requestPermissions'),
               actionLabel: 'Erlauben',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             _SetupStep(
               number: '3',
               title: isIOS
@@ -615,7 +806,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   : 'Quick Text liest keine Nachrichten aus anderen Apps. Der Accessibility-Service reagiert ausschließlich auf fokussierte, nicht-sensible Textfelder. Audio wird nur nach Tippen auf die Bubble aufgenommen und direkt an OpenAI gesendet.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF777280),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? QuickTextColors.darkSecondary
+                    : QuickTextColors.lightSecondary,
                 fontSize: 12,
                 height: 1.4,
               ),
@@ -634,13 +827,15 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
     decoration: BoxDecoration(
-      color: ready ? const Color(0xFFE7F8EE) : const Color(0xFFFFF1D8),
+      color: ready
+          ? const Color(0xFFE4F1E7)
+          : QuickTextColors.accent.withValues(alpha: 0.14),
       borderRadius: BorderRadius.circular(99),
     ),
     child: Text(
       ready ? 'Bereit' : 'Setup',
       style: TextStyle(
-        color: ready ? const Color(0xFF197544) : const Color(0xFF946200),
+        color: ready ? const Color(0xFF3E7652) : QuickTextColors.accent,
         fontWeight: FontWeight.w700,
         fontSize: 12,
       ),
@@ -658,10 +853,23 @@ class _SectionTitle extends StatelessWidget {
     children: [
       Text(
         title,
-        style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+        style: const TextStyle(
+          fontFamily: 'Source Serif 4',
+          fontFamilyFallback: ['Georgia', 'serif'],
+          fontSize: 26,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       const SizedBox(height: 3),
-      Text(subtitle, style: const TextStyle(color: Color(0xFF777280))),
+      Text(
+        subtitle,
+        style: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? QuickTextColors.darkSecondary
+              : QuickTextColors.lightSecondary,
+          fontSize: 15,
+        ),
+      ),
     ],
   );
 }
@@ -687,18 +895,18 @@ class _SetupStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(18),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: done
                       ? const Color(0xFFE7F8EE)
-                      : const Color(0xFFE8F2FF),
+                      : QuickTextColors.accent.withValues(alpha: 0.14),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -711,7 +919,7 @@ class _SetupStep extends StatelessWidget {
                       : Text(
                           number,
                           style: const TextStyle(
-                            color: Color(0xFF1677FF),
+                            color: QuickTextColors.accent,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -725,16 +933,18 @@ class _SetupStep extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF777280),
-                        fontSize: 13,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? QuickTextColors.darkSecondary
+                            : QuickTextColors.lightSecondary,
+                        fontSize: 14,
                       ),
                     ),
                   ],
