@@ -1,17 +1,26 @@
-# quick_text_mobile
+# Quick Text Mobile
 
-A new Flutter project.
+The Flutter host app for Quick Text on iOS and Android. iOS also includes the
+native `QuickTextKeyboard` extension for inserting the latest dictation at the
+cursor.
 
-## Getting Started
+## Languages
 
-This project is a starting point for a Flutter application.
+The app and iOS keyboard support English and German. The phone language is used
+automatically: German is selected for German system locales; every other system
+locale falls back to English. This app-language selection is independent from
+the dictation-language setting.
 
-A few resources to get you started if this is your first Flutter project:
+## Verify
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter analyze
+flutter test
+flutter build ios --simulator --debug
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For a TestFlight upload, increment `version` in `pubspec.yaml`, then archive and
+export with `ios/ExportOptions-AppStore.plist` using the configured Apple team.
+
+The custom iOS keyboard intentionally relies on iOS's own bottom globe and
+microphone controls instead of drawing duplicate controls above them.

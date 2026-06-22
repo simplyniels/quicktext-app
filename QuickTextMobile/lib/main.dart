@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'app_strings.dart';
 
 void main() => runApp(const QuickTextApp());
 
@@ -211,7 +214,9 @@ ThemeData quickTextTheme(Brightness brightness) {
 }
 
 class QuickTextApp extends StatelessWidget {
-  const QuickTextApp({super.key});
+  const QuickTextApp({super.key, this.locale});
+
+  final Locale? locale;
 
   @override
   Widget build(BuildContext context) {
@@ -223,6 +228,13 @@ class QuickTextApp extends StatelessWidget {
         theme: quickTextTheme(Brightness.light),
         darkTheme: quickTextTheme(Brightness.dark),
         themeMode: mode,
+        locale: locale,
+        supportedLocales: const [Locale('en'), Locale('de')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        localeResolutionCallback: (locale, supportedLocales) =>
+            locale?.languageCode == 'de'
+            ? const Locale('de')
+            : const Locale('en'),
         home: const HomePage(),
       ),
     );
@@ -311,7 +323,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     await _refresh();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Einstellungen sicher gespeichert')),
+        SnackBar(
+          content: Text(
+            AppStrings.of(context).text(
+              'Einstellungen sicher gespeichert',
+              'Settings saved securely',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -353,30 +372,46 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _processing = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message ?? 'Aufnahme fehlgeschlagen')),
+        SnackBar(
+          content: Text(
+            error.message ??
+                AppStrings.of(
+                  context,
+                ).text('Aufnahme fehlgeschlagen', 'Recording failed'),
+          ),
+        ),
       );
     }
   }
 
   Future<void> _openKeyboardSetup() async {
+    final strings = AppStrings.of(context);
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Quick-Text-Tastatur aktivieren'),
-        content: const Text(
-          'Öffne Einstellungen → Allgemein → Tastatur → Tastaturen → Neue Tastatur hinzufügen. Wähle Quick Text und aktiviere anschließend „Vollen Zugriff erlauben“, damit die Tastatur den von Quick Text kopierten Text einfügen kann.',
+        title: Text(
+          strings.text(
+            'Quick-Text-Tastatur aktivieren',
+            'Enable the Quick Text keyboard',
+          ),
+        ),
+        content: Text(
+          strings.text(
+            'Öffne Einstellungen → Allgemein → Tastatur → Tastaturen → Neue Tastatur hinzufügen. Wähle Quick Text und aktiviere anschließend „Vollen Zugriff erlauben“, damit die Tastatur den von Quick Text kopierten Text einfügen kann.',
+            'Open Settings → General → Keyboard → Keyboards → Add New Keyboard. Select Quick Text, then enable “Allow Full Access” so the keyboard can insert text copied by Quick Text.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Später'),
+            child: Text(strings.text('Später', 'Later')),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
               _channel.invokeMethod('openKeyboardSettings');
             },
-            child: const Text('Einstellungen öffnen'),
+            child: Text(strings.text('Einstellungen öffnen', 'Open Settings')),
           ),
         ],
       ),
@@ -385,6 +420,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     final isIOS = Platform.isIOS;
     final ready = _microphone && _apiKey && (isIOS || _accessibility);
     return Scaffold(
@@ -428,7 +464,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         ),
                       ),
                       Text(
-                        'Sprich. Sende. Fertig.',
+                        strings.text(
+                          'Sprich. Sende. Fertig.',
+                          'Speak. Send. Done.',
+                        ),
                         style: TextStyle(
                           color: Theme.of(context).brightness == Brightness.dark
                               ? QuickTextColors.darkSecondary
@@ -485,8 +524,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   const SizedBox(height: 22),
                   Text(
                     isIOS
-                        ? 'Sprich in Quick Text.\nFüge es überall ein.'
-                        : 'Deine Stimme, direkt\nim Textfeld.',
+                        ? strings.text(
+                            'Sprich in Quick Text.\nFüge es überall ein.',
+                            'Speak in Quick Text.\nPaste it anywhere.',
+                          )
+                        : strings.text(
+                            'Deine Stimme, direkt\nim Textfeld.',
+                            'Your voice, directly\nin the text field.',
+                          ),
                     style: TextStyle(
                       color: Colors.white,
                       fontFamily: 'Source Serif 4',
@@ -499,10 +544,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   const SizedBox(height: 12),
                   Text(
                     isIOS
-                        ? 'Nimm dein Diktat hier auf. Quick Text transkribiert, verbessert und kopiert es; die Quick-Text-Tastatur setzt es anschließend am Cursor ein.'
+                        ? strings.text(
+                            'Nimm dein Diktat hier auf. Quick Text transkribiert, verbessert und kopiert es; die Quick-Text-Tastatur setzt es anschließend am Cursor ein.',
+                            'Record your dictation here. Quick Text transcribes, improves, and copies it; the Quick Text keyboard then inserts it at the cursor.',
+                          )
                         : ready
-                        ? 'Tippe in WhatsApp, Mail oder eine andere App. Die Quick-Text-Bubble erscheint automatisch über deiner Tastatur.'
-                        : 'Drei kurze Schritte aktivieren die schwebende Spracheingabe in deinen Apps.',
+                        ? strings.text(
+                            'Tippe in WhatsApp, Mail oder eine andere App. Die Quick-Text-Bubble erscheint automatisch über deiner Tastatur.',
+                            'Type in WhatsApp, Mail, or another app. The Quick Text bubble appears automatically above your keyboard.',
+                          )
+                        : strings.text(
+                            'Drei kurze Schritte aktivieren die schwebende Spracheingabe in deinen Apps.',
+                            'Three quick steps enable floating voice input in your apps.',
+                          ),
                     style: const TextStyle(
                       color: Color(0xFFFFF5EB),
                       fontSize: 16,
@@ -550,12 +604,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       const SizedBox(height: 12),
                       Text(
                         _processing
-                            ? 'Transkribiere …'
+                            ? strings.text('Transkribiere …', 'Transcribing …')
                             : _recording
-                            ? '${_recordingSeconds ~/ 60}:${(_recordingSeconds % 60).toString().padLeft(2, '0')} · Zum Beenden tippen'
+                            ? '${_recordingSeconds ~/ 60}:${(_recordingSeconds % 60).toString().padLeft(2, '0')} · ${strings.text('Zum Beenden tippen', 'Tap to stop')}'
                             : ready
-                            ? 'Tippen und sprechen'
-                            : 'Bitte zuerst Setup abschließen',
+                            ? strings.text(
+                                'Tippen und sprechen',
+                                'Tap and speak',
+                              )
+                            : strings.text(
+                                'Bitte zuerst Setup abschließen',
+                                'Please complete setup first',
+                              ),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       if (_processing) ...[
@@ -576,9 +636,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'In Zwischenablage kopiert',
-                                style: TextStyle(
+                              Text(
+                                strings.text(
+                                  'In Zwischenablage kopiert',
+                                  'Copied to clipboard',
+                                ),
+                                style: const TextStyle(
                                   color: Color(0xFF197544),
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
@@ -600,17 +663,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ],
             const SizedBox(height: 30),
-            const _SectionTitle(
-              'Einrichtung',
-              'Einmal erledigen, danach überall diktieren.',
+            _SectionTitle(
+              strings.text('Einrichtung', 'Setup'),
+              strings.text(
+                'Einmal erledigen, danach überall diktieren.',
+                'Set it up once, then dictate anywhere.',
+              ),
             ),
             const SizedBox(height: 16),
             _SetupStep(
               number: '1',
-              title: 'OpenAI verbinden',
+              title: strings.text('OpenAI verbinden', 'Connect OpenAI'),
               subtitle: _apiKey
-                  ? 'API-Key sicher im ${isIOS ? 'iOS Keychain' : 'Android Keystore'} gespeichert'
-                  : 'Für whisper-1 und die Text-Workflows',
+                  ? strings.text(
+                      'API-Key sicher im ${isIOS ? 'iOS Keychain' : 'Android Keystore'} gespeichert',
+                      'API key stored securely in ${isIOS ? 'iOS Keychain' : 'Android Keystore'}',
+                    )
+                  : strings.text(
+                      'Für whisper-1 und die Text-Workflows',
+                      'For whisper-1 and text workflows',
+                    ),
               done: _apiKey,
               child: TextField(
                 controller: _keyController,
@@ -623,7 +695,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
                 decoration: InputDecoration(
                   hintText: _apiKey
-                      ? 'Neuen Key eingeben, um ihn zu ersetzen'
+                      ? strings.text(
+                          'Neuen Key eingeben, um ihn zu ersetzen',
+                          'Enter a new key to replace it',
+                        )
                       : 'sk-…',
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -639,41 +714,62 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             const SizedBox(height: 12),
             _SetupStep(
               number: '2',
-              title: 'Mikrofon erlauben',
+              title: strings.text('Mikrofon erlauben', 'Allow microphone'),
               subtitle: _microphone
-                  ? 'Zugriff ist aktiv'
-                  : 'Nur während einer gestarteten Aufnahme',
+                  ? strings.text('Zugriff ist aktiv', 'Access is enabled')
+                  : strings.text(
+                      'Nur während einer gestarteten Aufnahme',
+                      'Only while a recording is active',
+                    ),
               done: _microphone,
               action: _microphone
                   ? null
                   : () => _channel.invokeMethod('requestPermissions'),
-              actionLabel: 'Erlauben',
+              actionLabel: strings.text('Erlauben', 'Allow'),
             ),
             const SizedBox(height: 12),
             _SetupStep(
               number: '3',
               title: isIOS
-                  ? 'Quick-Text-Tastatur aktivieren'
-                  : 'Floating Bubble aktivieren',
+                  ? strings.text(
+                      'Quick-Text-Tastatur aktivieren',
+                      'Enable Quick Text keyboard',
+                    )
+                  : strings.text(
+                      'Floating Bubble aktivieren',
+                      'Enable floating bubble',
+                    ),
               subtitle: isIOS
-                  ? 'Fügt das letzte Diktat am Cursor ein'
+                  ? strings.text(
+                      'Fügt das letzte Diktat am Cursor ein',
+                      'Inserts the latest dictation at the cursor',
+                    )
                   : _accessibility
-                  ? 'Quick Text ist als Bedienungshilfe aktiv'
-                  : 'Erkennt Textfelder und fügt nur dein Diktat ein',
+                  ? strings.text(
+                      'Quick Text ist als Bedienungshilfe aktiv',
+                      'Quick Text accessibility is enabled',
+                    )
+                  : strings.text(
+                      'Erkennt Textfelder und fügt nur dein Diktat ein',
+                      'Detects text fields and inserts only your dictation',
+                    ),
               done: isIOS ? false : _accessibility,
               action: isIOS
                   ? _openKeyboardSetup
                   : () => _channel.invokeMethod('openAccessibility'),
               actionLabel: isIOS
-                  ? 'Anleitung'
+                  ? strings.text('Anleitung', 'Instructions')
                   : _accessibility
-                  ? 'Öffnen'
-                  : 'Aktivieren',
+                  ? strings.text('Öffnen', 'Open')
+                  : strings.text('Aktivieren', 'Enable'),
             ),
             const SizedBox(height: 28),
-            const _SectionTitle(
-              'Diktat',
-              'So soll Quick Text deinen Text ausgeben.',
+            _SectionTitle(
+              strings.text('Diktat', 'Dictation'),
+              strings.text(
+                'So soll Quick Text deinen Text ausgeben.',
+                'Choose how Quick Text should output your text.',
+              ),
             ),
             const SizedBox(height: 12),
             Card(
@@ -682,25 +778,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Workflow',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    Text(
+                      strings.text('Workflow', 'Workflow'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       initialValue: _workflow,
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'transcription',
-                          child: Text('Quick Text · Originalgetreu'),
+                          child: Text(
+                            strings.text(
+                              'Quick Text · Originalgetreu',
+                              'Quick Text · Faithful',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'improve',
-                          child: Text('Quick Text+ · Verbessern'),
+                          child: Text(
+                            strings.text(
+                              'Quick Text+ · Verbessern',
+                              'Quick Text+ · Improve',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'calm',
-                          child: Text(r'Quick Text $%&! · Ruhiger'),
+                          child: Text(
+                            strings.text(
+                              r'Quick Text $%&! · Ruhiger',
+                              r'Quick Text $%&! · Calmer',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'emoji',
@@ -711,16 +822,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           setState(() => _workflow = value ?? _workflow),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Sprache',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    Text(
+                      strings.text('Sprache', 'Dictation language'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 10),
                     SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'de', label: Text('Deutsch')),
-                        ButtonSegment(value: 'en', label: Text('English')),
-                        ButtonSegment(value: 'auto', label: Text('Auto')),
+                      segments: [
+                        ButtonSegment(
+                          value: 'de',
+                          label: Text(strings.text('Deutsch', 'German')),
+                        ),
+                        const ButtonSegment(
+                          value: 'en',
+                          label: Text('English'),
+                        ),
+                        ButtonSegment(
+                          value: 'auto',
+                          label: Text(strings.text('Auto', 'Auto')),
+                        ),
                       ],
                       selected: {_language},
                       onSelectionChanged: (value) =>
@@ -732,33 +852,36 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       controller: _termsController,
                       minLines: 2,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Eigennamen & Fachbegriffe',
+                      decoration: InputDecoration(
+                        labelText: strings.text(
+                          'Eigennamen & Fachbegriffe',
+                          'Names & technical terms',
+                        ),
                         hintText: 'Quick Text, Blackboat, …',
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Darstellung',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    Text(
+                      strings.text('Darstellung', 'Appearance'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 10),
                     SegmentedButton<String>(
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                           value: 'system',
-                          icon: Icon(Icons.brightness_auto_outlined),
-                          label: Text('Auto'),
+                          icon: const Icon(Icons.brightness_auto_outlined),
+                          label: Text(strings.text('Auto', 'Auto')),
                         ),
                         ButtonSegment(
                           value: 'light',
-                          icon: Icon(Icons.light_mode_outlined),
-                          label: Text('Hell'),
+                          icon: const Icon(Icons.light_mode_outlined),
+                          label: Text(strings.text('Hell', 'Light')),
                         ),
                         ButtonSegment(
                           value: 'dark',
-                          icon: Icon(Icons.dark_mode_outlined),
-                          label: Text('Dunkel'),
+                          icon: const Icon(Icons.dark_mode_outlined),
+                          label: Text(strings.text('Dunkel', 'Dark')),
                         ),
                       ],
                       selected: {_themeMode},
@@ -789,9 +912,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check_rounded),
-              label: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 15),
-                child: Text('Einstellungen speichern'),
+              label: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: Text(
+                  strings.text('Einstellungen speichern', 'Save settings'),
+                ),
               ),
               style: FilledButton.styleFrom(
                 shape: RoundedRectangleBorder(
@@ -802,8 +927,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             const SizedBox(height: 16),
             Text(
               isIOS
-                  ? 'Quick Text nimmt Audio nur nach Tippen auf die Mikrofontaste auf und sendet es direkt an OpenAI. Die Tastatur liest die Zwischenablage ausschließlich nach deinem Tap auf „Einfügen“.'
-                  : 'Quick Text liest keine Nachrichten aus anderen Apps. Der Accessibility-Service reagiert ausschließlich auf fokussierte, nicht-sensible Textfelder. Audio wird nur nach Tippen auf die Bubble aufgenommen und direkt an OpenAI gesendet.',
+                  ? strings.text(
+                      'Quick Text nimmt Audio nur nach Tippen auf die Mikrofontaste auf und sendet es direkt an OpenAI. Die Tastatur liest die Zwischenablage ausschließlich nach deinem Tap auf „Einfügen“.',
+                      'Quick Text records audio only after you tap the microphone button and sends it directly to OpenAI. The keyboard reads the clipboard only after you tap “Paste”.',
+                    )
+                  : strings.text(
+                      'Quick Text liest keine Nachrichten aus anderen Apps. Der Accessibility-Service reagiert ausschließlich auf fokussierte, nicht-sensible Textfelder. Audio wird nur nach Tippen auf die Bubble aufgenommen und direkt an OpenAI gesendet.',
+                      'Quick Text does not read messages from other apps. The accessibility service reacts only to focused, non-sensitive text fields. Audio is recorded only after you tap the bubble and is sent directly to OpenAI.',
+                    ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context).brightness == Brightness.dark
@@ -824,23 +955,26 @@ class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.ready});
   final bool ready;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-    decoration: BoxDecoration(
-      color: ready
-          ? const Color(0xFFE4F1E7)
-          : QuickTextColors.accent.withValues(alpha: 0.14),
-      borderRadius: BorderRadius.circular(99),
-    ),
-    child: Text(
-      ready ? 'Bereit' : 'Setup',
-      style: TextStyle(
-        color: ready ? const Color(0xFF3E7652) : QuickTextColors.accent,
-        fontWeight: FontWeight.w700,
-        fontSize: 12,
+  Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: ready
+            ? const Color(0xFFE4F1E7)
+            : QuickTextColors.accent.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(99),
       ),
-    ),
-  );
+      child: Text(
+        ready ? strings.text('Bereit', 'Ready') : 'Setup',
+        style: TextStyle(
+          color: ready ? const Color(0xFF3E7652) : QuickTextColors.accent,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
 }
 
 class _SectionTitle extends StatelessWidget {

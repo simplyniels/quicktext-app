@@ -3,6 +3,11 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
   private let statusLabel = UILabel()
   private let accent = UIColor(red: 210 / 255, green: 120 / 255, blue: 73 / 255, alpha: 1)
+  private var isGerman: Bool { Locale.preferredLanguages.first?.lowercased().hasPrefix("de") == true }
+
+  private func localized(_ german: String, _ english: String) -> String {
+    isGerman ? german : english
+  }
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -43,7 +48,10 @@ final class KeyboardViewController: UIInputViewController {
     title.textColor = foreground
 
     let subtitle = UILabel()
-    subtitle.text = "Systemdiktat nutzen oder Ergebnis einfügen."
+    subtitle.text = localized(
+      "Systemdiktat nutzen oder Ergebnis einfügen.",
+      "Use system dictation or paste your result."
+    )
     subtitle.font = .systemFont(ofSize: 14)
     subtitle.textColor = secondary
     subtitle.adjustsFontSizeToFitWidth = true
@@ -59,7 +67,10 @@ final class KeyboardViewController: UIInputViewController {
     header.spacing = 12
 
     let recordButton = UIButton(type: .system)
-    recordButton.setTitle("  Tippe das Mikrofon unten rechts", for: .normal)
+    recordButton.setTitle(
+      localized("  Tippe das Mikrofon unten rechts", "  Tap the microphone at the bottom right"),
+      for: .normal
+    )
     recordButton.setImage(UIImage(systemName: "sparkles"), for: .normal)
     recordButton.tintColor = .white
     recordButton.setTitleColor(.white, for: .normal)
@@ -70,7 +81,10 @@ final class KeyboardViewController: UIInputViewController {
     recordButton.addTarget(self, action: #selector(showMicrophoneHint), for: .touchUpInside)
 
     let pasteButton = UIButton(type: .system)
-    pasteButton.setTitle("  Letztes Diktat einfügen", for: .normal)
+    pasteButton.setTitle(
+      localized("  Letztes Diktat einfügen", "  Paste latest dictation"),
+      for: .normal
+    )
     pasteButton.setImage(UIImage(systemName: "doc.on.clipboard"), for: .normal)
     pasteButton.tintColor = accent
     pasteButton.setTitleColor(accent, for: .normal)
@@ -88,36 +102,14 @@ final class KeyboardViewController: UIInputViewController {
     actions.distribution = .fill
     actions.spacing = 12
 
-    statusLabel.text = hasFullAccess ? "●  Vollzugriff aktiv" : "Vollzugriff zum Einfügen aktivieren"
+    statusLabel.text = hasFullAccess
+      ? localized("●  Vollzugriff aktiv", "●  Full Access enabled")
+      : localized("Vollzugriff zum Einfügen aktivieren", "Enable Full Access to paste")
     statusLabel.font = .systemFont(ofSize: 14, weight: .semibold)
     statusLabel.textColor = hasFullAccess ? UIColor.systemGreen : secondary
     statusLabel.textAlignment = .center
 
-    let nextKeyboard = UIButton(type: .system)
-    nextKeyboard.setImage(UIImage(systemName: "globe"), for: .normal)
-    nextKeyboard.tintColor = secondary
-    nextKeyboard.accessibilityLabel = "Tastatur wechseln"
-    nextKeyboard.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
-
-    let microphone = UIButton(type: .system)
-    microphone.setImage(UIImage(systemName: "mic"), for: .normal)
-    microphone.tintColor = accent
-    microphone.backgroundColor = accent.withAlphaComponent(0.18)
-    microphone.layer.cornerRadius = 23
-    microphone.accessibilityLabel = "iOS-Mikrofon"
-    microphone.addTarget(self, action: #selector(showMicrophoneHint), for: .touchUpInside)
-
-    let toolbarSpacer = UIView()
-    let toolbar = UIStackView(arrangedSubviews: [nextKeyboard, toolbarSpacer, microphone])
-    toolbar.axis = .horizontal
-    toolbar.alignment = .center
-    toolbar.backgroundColor = dark
-      ? UIColor(red: 15 / 255, green: 12 / 255, blue: 9 / 255, alpha: 1)
-      : UIColor(red: 239 / 255, green: 231 / 255, blue: 215 / 255, alpha: 1)
-    toolbar.isLayoutMarginsRelativeArrangement = true
-    toolbar.layoutMargins = UIEdgeInsets(top: 12, left: 26, bottom: 12, right: 26)
-
-    let stack = UIStackView(arrangedSubviews: [handle, header, actions, statusLabel, toolbar])
+    let stack = UIStackView(arrangedSubviews: [handle, header, actions, statusLabel])
     stack.axis = .vertical
     stack.alignment = .center
     stack.setCustomSpacing(20, after: handle)
@@ -137,40 +129,45 @@ final class KeyboardViewController: UIInputViewController {
       logoIcon.centerYAnchor.constraint(equalTo: logo.centerYAnchor),
       logoIcon.widthAnchor.constraint(equalToConstant: 22),
       logoIcon.heightAnchor.constraint(equalToConstant: 22),
-      microphone.widthAnchor.constraint(equalToConstant: 46),
-      microphone.heightAnchor.constraint(equalToConstant: 46),
       header.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -48),
       actions.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -48),
       statusLabel.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -48),
       stack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       stack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       stack.topAnchor.constraint(equalTo: view.topAnchor, constant: 14),
-      stack.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      view.heightAnchor.constraint(equalToConstant: 356),
+      stack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -18),
+      view.heightAnchor.constraint(equalToConstant: 290),
     ])
   }
 
   @objc private func showMicrophoneHint() {
-    statusLabel.text = "Tippe jetzt unten rechts auf das iOS-Mikrofon  ↘︎"
+    statusLabel.text = localized(
+      "Tippe jetzt unten rechts auf das iOS-Mikrofon  ↘︎",
+      "Now tap the iOS microphone at the bottom right  ↘︎"
+    )
     statusLabel.textColor = accent
     UISelectionFeedbackGenerator().selectionChanged()
   }
 
   @objc private func pasteLatest() {
     guard hasFullAccess else {
-      statusLabel.text = "Vollzugriff ist für die Zwischenablage erforderlich"
+      statusLabel.text = localized(
+        "Vollzugriff ist für die Zwischenablage erforderlich",
+        "Full Access is required to use the clipboard"
+      )
       statusLabel.textColor = .systemOrange
       return
     }
     guard let text = UIPasteboard.general.string, !text.isEmpty else {
-      statusLabel.text = "Noch kein Diktat in der Zwischenablage"
+      statusLabel.text = localized(
+        "Noch kein Diktat in der Zwischenablage",
+        "No dictation in the clipboard yet"
+      )
       statusLabel.textColor = .systemOrange
       return
     }
     textDocumentProxy.insertText(text)
-    statusLabel.text = "✓  Text eingefügt"
+    statusLabel.text = localized("✓  Text eingefügt", "✓  Text pasted")
     statusLabel.textColor = .systemGreen
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
   }

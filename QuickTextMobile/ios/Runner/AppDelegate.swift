@@ -3,6 +3,10 @@ import Flutter
 import Security
 import UIKit
 
+private func localized(_ german: String, _ english: String) -> String {
+  Locale.preferredLanguages.first?.lowercased().hasPrefix("de") == true ? german : english
+}
+
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var channel: FlutterMethodChannel?
@@ -47,12 +51,12 @@ import UIKit
       ])
     case "saveSettings":
       guard let arguments = call.arguments as? [String: Any] else {
-        result(FlutterError(code: "arguments", message: "Einstellungen fehlen", details: nil))
+        result(FlutterError(code: "arguments", message: localized("Einstellungen fehlen", "Settings are missing"), details: nil))
         return
       }
       if let key = arguments["apiKey"] as? String, !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
         do { try KeychainStore.save(key.trimmingCharacters(in: .whitespacesAndNewlines)) }
-        catch { result(FlutterError(code: "keychain", message: "API-Key konnte nicht gespeichert werden", details: nil)); return }
+        catch { result(FlutterError(code: "keychain", message: localized("API-Key konnte nicht gespeichert werden", "The API key could not be saved"), details: nil)); return }
       }
       if let language = arguments["language"] as? String { settings.set(language, forKey: "language") }
       if let workflow = arguments["workflow"] as? String { settings.set(workflow, forKey: "workflow") }
@@ -80,10 +84,10 @@ import UIKit
 
   private func startRecording() throws {
     guard microphoneGranted else {
-      throw QuickTextError.message("Bitte zuerst Mikrofonzugriff erlauben.")
+      throw QuickTextError.message(localized("Bitte zuerst Mikrofonzugriff erlauben.", "Please allow microphone access first."))
     }
     guard KeychainStore.read() != nil else {
-      throw QuickTextError.message("Bitte zuerst den OpenAI API-Key speichern.")
+      throw QuickTextError.message(localized("Bitte zuerst den OpenAI API-Key speichern.", "Please save the OpenAI API key first."))
     }
     let session = AVAudioSession.sharedInstance()
     try session.setCategory(.record, mode: .default, options: [])
@@ -99,7 +103,7 @@ import UIKit
     ])
     guard newRecorder.prepareToRecord(), newRecorder.record(forDuration: 60) else {
       try? session.setActive(false, options: .notifyOthersOnDeactivation)
-      throw QuickTextError.message("Die Audioaufnahme konnte nicht gestartet werden.")
+      throw QuickTextError.message(localized("Die Audioaufnahme konnte nicht gestartet werden.", "The audio recording could not be started."))
     }
     recorder = newRecorder
     recordingURL = url
@@ -117,7 +121,7 @@ import UIKit
     recorder = nil
     try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     guard let url = recordingURL, let key = KeychainStore.read() else {
-      result(FlutterError(code: "recording", message: "Keine Aufnahme gefunden", details: nil))
+      result(FlutterError(code: "recording", message: localized("Keine Aufnahme gefunden", "No recording found"), details: nil))
       return
     }
     recordingURL = nil
@@ -153,7 +157,7 @@ private enum QuickTextError: LocalizedError {
   case message(String)
   var errorDescription: String? {
     if case .message(let value) = self { return value }
-    return "Quick Text Fehler"
+    return localized("Quick Text Fehler", "Quick Text error")
   }
 }
 
@@ -167,7 +171,7 @@ private enum KeychainStore {
     var item = query
     item[kSecValueData as String] = Data(value.utf8)
     item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-    guard SecItemAdd(item as CFDictionary, nil) == errSecSuccess else { throw QuickTextError.message("Keychain-Zugriff fehlgeschlagen") }
+    guard SecItemAdd(item as CFDictionary, nil) == errSecSuccess else { throw QuickTextError.message(localized("Keychain-Zugriff fehlgeschlagen", "Keychain access failed")) }
   }
 
   static func read() -> String? {

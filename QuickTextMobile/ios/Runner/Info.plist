@@ -6,6 +6,11 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>de</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Quick Text</string>
 	<key>CFBundleExecutable</key>
@@ -17,7 +22,7 @@
 	<key>CFBundleName</key>
 	<string>Quick Text</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Quick Text benötigt das Mikrofon nur während einer von dir gestarteten Spracheingabe.</string>
+	<string>Quick Text uses the microphone only during voice input that you start.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
