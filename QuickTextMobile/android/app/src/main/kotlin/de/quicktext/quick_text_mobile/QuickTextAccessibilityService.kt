@@ -52,28 +52,22 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private var recordingFile: File? = null
     private var recordingStartedAt = 0L
     private var state = State.IDLE
-    private var lastEditorSeenAt = 0L
     private var timer: TextView? = null
     private var waveform: WaveformView? = null
     private var overlayParams: WindowManager.LayoutParams? = null
     private var anchorX = -1
     private var anchorY = -1
     private val positionPrefs by lazy { getSharedPreferences("quick_text_overlay", Context.MODE_PRIVATE) }
-    private val hideOverlayDelayed: Runnable = object : Runnable {
-        override fun run() {
-            if (state != State.IDLE) return
-            val activePackage = rootInActiveWindow?.packageName?.toString()
-            when {
-                activePackage == packageName -> hideOverlay()
-                hasValidInputTarget() -> {
-                    lastEditorSeenAt = SystemClock.elapsedRealtime()
-                    showIdleBubble()
-                }
-                overlay != null && isKeyboardVisible() &&
-                    SystemClock.elapsedRealtime() - lastEditorSeenAt < 30_000 ->
-                    main.postDelayed(this, 1_500)
-                else -> hideOverlay()
-            }
+    private val reconcileIdleBubble = Runnable {
+        if (state != State.IDLE) return@Runnable
+        val activePackage = rootInActiveWindow?.packageName?.toString()
+        val shouldShow = activePackage != packageName &&
+            hasValidInputTarget() &&
+            isKeyboardVisible()
+        if (shouldShow) {
+            showIdleBubble()
+        } else {
+            hideOverlay()
         }
     }
     private val timerTick = object : Runnable {
@@ -95,24 +89,20 @@ class QuickTextAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null || state != State.IDLE) return
-        if (isValidEditor(event.source) || hasValidInputTarget()) {
-            lastEditorSeenAt = SystemClock.elapsedRealtime()
-            main.removeCallbacks(hideOverlayDelayed)
-            showIdleBubble()
-        } else {
-            main.removeCallbacks(hideOverlayDelayed)
-            main.postDelayed(hideOverlayDelayed, 1_200)
-        }
+        main.removeCallbacks(reconcileIdleBubble)
+        // Reconcile on the next main-loop turn so rootInActiveWindow and the IME
+        // window list describe the new focus/window state from this event.
+        main.post(reconcileIdleBubble)
     }
 
     override fun onInterrupt() {
-        main.removeCallbacks(hideOverlayDelayed)
+        main.removeCallbacks(reconcileIdleBubble)
         cancelRecording()
         hideOverlay()
     }
 
     override fun onDestroy() {
-        main.removeCallbacks(hideOverlayDelayed)
+        main.removeCallbacks(reconcileIdleBubble)
         cancelRecording()
         hideOverlay()
         executor.shutdownNow()
@@ -317,7 +307,7 @@ class QuickTextAccessibilityService : AccessibilityService() {
             val params = overlayParams ?: return@setOnTouchListener false
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    main.removeCallbacks(hideOverlayDelayed)
+                    main.removeCallbacks(reconcileIdleBubble)
                     downX = event.rawX
                     downY = event.rawY
                     startX = params.x
