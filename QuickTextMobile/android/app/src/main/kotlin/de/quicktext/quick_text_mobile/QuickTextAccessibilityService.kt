@@ -61,9 +61,11 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private val reconcileIdleBubble = Runnable {
         if (state != State.IDLE) return@Runnable
         val activePackage = rootInActiveWindow?.packageName?.toString()
+        // Cheap checks first: the window-list lookup costs almost nothing,
+        // hasValidInputTarget() walks the node tree over binder IPC.
         val shouldShow = activePackage != packageName &&
-            hasValidInputTarget() &&
-            isKeyboardVisible()
+            isKeyboardVisible() &&
+            hasValidInputTarget()
         if (shouldShow) {
             showIdleBubble()
         } else {
@@ -93,6 +95,12 @@ class QuickTextAccessibilityService : AccessibilityService() {
         // Reconcile on the next main-loop turn so rootInActiveWindow and the IME
         // window list describe the new focus/window state from this event.
         main.post(reconcileIdleBubble)
+        // rootInActiveWindow and the window list can lag a few hundred ms behind
+        // the event while the IME show/hide animation settles — and no later
+        // event corrects a stale result. Re-check briefly so the bubble
+        // appears/disappears as soon as the real state is readable.
+        main.postDelayed(reconcileIdleBubble, 120)
+        main.postDelayed(reconcileIdleBubble, 400)
     }
 
     override fun onInterrupt() {

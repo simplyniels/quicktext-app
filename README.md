@@ -122,8 +122,10 @@ flutter run
 Android 13 or newer is required. The containing app stores the OpenAI API key
 in Android Keystore. Its native Accessibility Service shows a floating Quick
 Text bubble when a regular text field and the software keyboard are active.
-See [docs/setup-android.md](docs/setup-android.md) for setup, privacy behavior,
-and device testing.
+The app includes a personal dictionary: words added there (names, brands,
+technical terms) are passed to the transcription so they are recognized
+reliably. See [docs/setup-android.md](docs/setup-android.md) for setup,
+privacy behavior, and device testing.
 
 ### Build And Run On iOS
 

@@ -259,12 +259,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _showKey = false;
   bool _recording = false;
   bool _processing = false;
+  bool _setupExpanded = false;
   int _recordingSeconds = 0;
   String? _lastResult;
   Timer? _recordingTimer;
   String _language = 'de';
   String _workflow = 'transcription';
   String _themeMode = 'system';
+  List<String> _dictionary = [];
 
   @override
   void initState() {
@@ -300,7 +302,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _language = status['language'] as String? ?? 'de';
         _workflow = status['workflow'] as String? ?? 'transcription';
         _themeMode = status['themeMode'] as String? ?? 'system';
-        _termsController.text = status['customTerms'] as String? ?? '';
+        _dictionary = _parseTerms(status['customTerms'] as String? ?? '');
         _busy = false;
       });
       quickTextThemeMode.value = themeModeFromSetting(_themeMode);
@@ -309,6 +311,35 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  List<String> _parseTerms(String raw) => raw
+      .split(RegExp(r'[,;\n]'))
+      .map((term) => term.trim())
+      .where((term) => term.isNotEmpty)
+      .toList();
+
+  void _addTerms(String input) {
+    final added = _parseTerms(input)
+        .where(
+          (term) => !_dictionary.any(
+            (existing) => existing.toLowerCase() == term.toLowerCase(),
+          ),
+        )
+        .toList();
+    _termsController.clear();
+    if (added.isEmpty) return;
+    setState(() => _dictionary = [..._dictionary, ...added]);
+    unawaited(_saveDictionary());
+  }
+
+  void _removeTerm(String term) {
+    setState(() => _dictionary = _dictionary.where((t) => t != term).toList());
+    unawaited(_saveDictionary());
+  }
+
+  Future<void> _saveDictionary() => _channel.invokeMethod('saveSettings', {
+    'customTerms': _dictionary.join(', '),
+  });
+
   Future<void> _save() async {
     FocusScope.of(context).unfocus();
     setState(() => _busy = true);
@@ -316,7 +347,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       'apiKey': _keyController.text,
       'language': _language,
       'workflow': _workflow,
-      'customTerms': _termsController.text,
+      'customTerms': _dictionary.join(', '),
       'themeMode': _themeMode,
     });
     _keyController.clear();
@@ -416,6 +447,236 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  Widget _dictionaryCard(AppStrings strings) {
+    final secondary = Theme.of(context).brightness == Brightness.dark
+        ? QuickTextColors.darkSecondary
+        : QuickTextColors.lightSecondary;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _termsController,
+              autocorrect: false,
+              textInputAction: TextInputAction.done,
+              onSubmitted: _addTerms,
+              decoration: InputDecoration(
+                hintText: strings.text(
+                  'Wort hinzufügen, z. B. „Blackboat“',
+                  'Add a word, e.g. “Blackboat”',
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.add_rounded),
+                  tooltip: strings.text('Hinzufügen', 'Add'),
+                  onPressed: () => _addTerms(_termsController.text),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_dictionary.isEmpty)
+              Text(
+                strings.text(
+                  'Noch keine Wörter. Ergänze Namen, Marken oder Fachbegriffe, die bisher falsch transkribiert wurden — jedes Wort wird sofort gespeichert.',
+                  'No words yet. Add names, brands, or technical terms that were transcribed incorrectly — each word is saved instantly.',
+                ),
+                style: TextStyle(color: secondary, fontSize: 13, height: 1.4),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final term in _dictionary)
+                    InputChip(
+                      label: Text(term),
+                      onDeleted: () => _removeTerm(term),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _setupSection(AppStrings strings, bool isIOS, bool ready) {
+    final title = _SectionTitle(
+      strings.text('Einrichtung', 'Setup'),
+      ready
+          ? strings.text(
+              'Abgeschlossen — bei Bedarf hier anpassen.',
+              'Complete — adjust here if needed.',
+            )
+          : strings.text(
+              'Einmal erledigen, danach überall diktieren.',
+              'Set it up once, then dictate anywhere.',
+            ),
+    );
+    if (ready && !_setupExpanded) {
+      return [
+        title,
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE7F8EE),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Color(0xFF197544),
+                    size: 21,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Text(
+                    strings.text('Alles eingerichtet', 'Everything is set up'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 17,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _setupExpanded = true),
+                  child: Text(strings.text('Anzeigen', 'Show')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ];
+    }
+    return [
+      title,
+      const SizedBox(height: 16),
+      _SetupStep(
+        number: '1',
+        title: strings.text('OpenAI verbinden', 'Connect OpenAI'),
+        subtitle: _apiKey
+            ? strings.text(
+                'API-Key sicher im ${isIOS ? 'iOS Keychain' : 'Android Keystore'} gespeichert',
+                'API key stored securely in ${isIOS ? 'iOS Keychain' : 'Android Keystore'}',
+              )
+            : strings.text(
+                'Für whisper-1 und die Text-Workflows',
+                'For whisper-1 and text workflows',
+              ),
+        done: _apiKey,
+        child: TextField(
+          controller: _keyController,
+          obscureText: !_showKey,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 13),
+          decoration: InputDecoration(
+            hintText: _apiKey
+                ? strings.text(
+                    'Neuen Key eingeben, um ihn zu ersetzen',
+                    'Enter a new key to replace it',
+                  )
+                : 'sk-…',
+            suffixIcon: IconButton(
+              icon: Icon(
+                _showKey
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () => setState(() => _showKey = !_showKey),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      _SetupStep(
+        number: '2',
+        title: strings.text('Mikrofon erlauben', 'Allow microphone'),
+        subtitle: _microphone
+            ? strings.text('Zugriff ist aktiv', 'Access is enabled')
+            : strings.text(
+                'Nur während einer gestarteten Aufnahme',
+                'Only while a recording is active',
+              ),
+        done: _microphone,
+        action: _microphone
+            ? null
+            : () => _channel.invokeMethod('requestPermissions'),
+        actionLabel: strings.text('Erlauben', 'Allow'),
+      ),
+      const SizedBox(height: 12),
+      _SetupStep(
+        number: '3',
+        title: isIOS
+            ? strings.text(
+                'Quick-Text-Tastatur aktivieren',
+                'Enable Quick Text keyboard',
+              )
+            : strings.text(
+                'Floating Bubble aktivieren',
+                'Enable floating bubble',
+              ),
+        subtitle: isIOS
+            ? strings.text(
+                'Fügt das letzte Diktat am Cursor ein',
+                'Inserts the latest dictation at the cursor',
+              )
+            : _accessibility
+            ? strings.text(
+                'Quick Text ist als Bedienungshilfe aktiv',
+                'Quick Text accessibility is enabled',
+              )
+            : strings.text(
+                'Erkennt Textfelder und fügt nur dein Diktat ein',
+                'Detects text fields and inserts only your dictation',
+              ),
+        done: isIOS ? false : _accessibility,
+        action: isIOS
+            ? _openKeyboardSetup
+            : () => _channel.invokeMethod('openAccessibility'),
+        actionLabel: isIOS
+            ? strings.text('Anleitung', 'Instructions')
+            : _accessibility
+            ? strings.text('Öffnen', 'Open')
+            : strings.text('Aktivieren', 'Enable'),
+      ),
+      const SizedBox(height: 18),
+      FilledButton.icon(
+        onPressed: _busy ? null : _save,
+        icon: _busy
+            ? const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.check_rounded),
+        label: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          child: Text(strings.text('Einstellungen speichern', 'Save settings')),
+        ),
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+      if (ready)
+        Center(
+          child: TextButton(
+            onPressed: () => setState(() => _setupExpanded = false),
+            child: Text(strings.text('Ausblenden', 'Hide')),
+          ),
+        ),
+    ];
   }
 
   @override
@@ -663,106 +924,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ],
             const SizedBox(height: 30),
+            if (!ready) ...[
+              ..._setupSection(strings, isIOS, ready),
+              const SizedBox(height: 28),
+            ],
             _SectionTitle(
-              strings.text('Einrichtung', 'Setup'),
+              strings.text('Wörterbuch', 'Dictionary'),
               strings.text(
-                'Einmal erledigen, danach überall diktieren.',
-                'Set it up once, then dictate anywhere.',
-              ),
-            ),
-            const SizedBox(height: 16),
-            _SetupStep(
-              number: '1',
-              title: strings.text('OpenAI verbinden', 'Connect OpenAI'),
-              subtitle: _apiKey
-                  ? strings.text(
-                      'API-Key sicher im ${isIOS ? 'iOS Keychain' : 'Android Keystore'} gespeichert',
-                      'API key stored securely in ${isIOS ? 'iOS Keychain' : 'Android Keystore'}',
-                    )
-                  : strings.text(
-                      'Für whisper-1 und die Text-Workflows',
-                      'For whisper-1 and text workflows',
-                    ),
-              done: _apiKey,
-              child: TextField(
-                controller: _keyController,
-                obscureText: !_showKey,
-                autocorrect: false,
-                enableSuggestions: false,
-                style: const TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 13,
-                ),
-                decoration: InputDecoration(
-                  hintText: _apiKey
-                      ? strings.text(
-                          'Neuen Key eingeben, um ihn zu ersetzen',
-                          'Enter a new key to replace it',
-                        )
-                      : 'sk-…',
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _showKey
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                    onPressed: () => setState(() => _showKey = !_showKey),
-                  ),
-                ),
+                'Eigennamen & Fachbegriffe, die die KI erkennen soll.',
+                'Names & terms the AI should recognize.',
               ),
             ),
             const SizedBox(height: 12),
-            _SetupStep(
-              number: '2',
-              title: strings.text('Mikrofon erlauben', 'Allow microphone'),
-              subtitle: _microphone
-                  ? strings.text('Zugriff ist aktiv', 'Access is enabled')
-                  : strings.text(
-                      'Nur während einer gestarteten Aufnahme',
-                      'Only while a recording is active',
-                    ),
-              done: _microphone,
-              action: _microphone
-                  ? null
-                  : () => _channel.invokeMethod('requestPermissions'),
-              actionLabel: strings.text('Erlauben', 'Allow'),
-            ),
-            const SizedBox(height: 12),
-            _SetupStep(
-              number: '3',
-              title: isIOS
-                  ? strings.text(
-                      'Quick-Text-Tastatur aktivieren',
-                      'Enable Quick Text keyboard',
-                    )
-                  : strings.text(
-                      'Floating Bubble aktivieren',
-                      'Enable floating bubble',
-                    ),
-              subtitle: isIOS
-                  ? strings.text(
-                      'Fügt das letzte Diktat am Cursor ein',
-                      'Inserts the latest dictation at the cursor',
-                    )
-                  : _accessibility
-                  ? strings.text(
-                      'Quick Text ist als Bedienungshilfe aktiv',
-                      'Quick Text accessibility is enabled',
-                    )
-                  : strings.text(
-                      'Erkennt Textfelder und fügt nur dein Diktat ein',
-                      'Detects text fields and inserts only your dictation',
-                    ),
-              done: isIOS ? false : _accessibility,
-              action: isIOS
-                  ? _openKeyboardSetup
-                  : () => _channel.invokeMethod('openAccessibility'),
-              actionLabel: isIOS
-                  ? strings.text('Anleitung', 'Instructions')
-                  : _accessibility
-                  ? strings.text('Öffnen', 'Open')
-                  : strings.text('Aktivieren', 'Enable'),
-            ),
+            _dictionaryCard(strings),
             const SizedBox(height: 28),
             _SectionTitle(
               strings.text('Diktat', 'Dictation'),
@@ -818,8 +992,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           child: Text('Quick Text :) · Emojis'),
                         ),
                       ],
-                      onChanged: (value) =>
-                          setState(() => _workflow = value ?? _workflow),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _workflow = value);
+                        unawaited(
+                          _channel.invokeMethod('saveSettings', {
+                            'workflow': value,
+                          }),
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -843,22 +1024,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         ),
                       ],
                       selected: {_language},
-                      onSelectionChanged: (value) =>
-                          setState(() => _language = value.first),
+                      onSelectionChanged: (value) {
+                        final selection = value.first;
+                        setState(() => _language = selection);
+                        unawaited(
+                          _channel.invokeMethod('saveSettings', {
+                            'language': selection,
+                          }),
+                        );
+                      },
                       showSelectedIcon: false,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _termsController,
-                      minLines: 2,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: strings.text(
-                          'Eigennamen & Fachbegriffe',
-                          'Names & technical terms',
-                        ),
-                        hintText: 'Quick Text, Blackboat, …',
-                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -903,27 +1078,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-            const SizedBox(height: 18),
-            FilledButton.icon(
-              onPressed: _busy ? null : _save,
-              icon: _busy
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check_rounded),
-              label: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                child: Text(
-                  strings.text('Einstellungen speichern', 'Save settings'),
-                ),
-              ),
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-            ),
+            if (ready) ...[
+              const SizedBox(height: 28),
+              ..._setupSection(strings, isIOS, ready),
+            ],
             const SizedBox(height: 16),
             Text(
               isIOS
