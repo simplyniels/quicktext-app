@@ -42,7 +42,8 @@ App Store provisioning profiles for both `de.quicktext.mobile` and
 1. Open Quick Text, enter the OpenAI API key, and save. The key is stored in the
    iOS Keychain with this-device-only protection.
 2. Grant microphone access.
-3. Choose language and workflow.
+3. Choose **German**, **English**, **French**, or **Auto** as the dictation
+   language, then choose the workflow.
    Under **Darstellung**, choose **Auto**, **Hell**, or **Dunkel**. Auto follows
    the iOS appearance. The keyboard extension always follows iOS directly.
 4. Open **Settings → General → Keyboard → Keyboards → Add New Keyboard** and

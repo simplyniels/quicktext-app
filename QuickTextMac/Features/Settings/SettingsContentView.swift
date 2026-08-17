@@ -525,6 +525,23 @@ struct CustomizeSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
 
+            // MARK: Diktatsprache
+            VStack(alignment: .leading, spacing: 8) {
+                SectionLabel(text: "Diktatsprache")
+
+                Picker("Diktatsprache", selection: $appState.transcriptionSettings.language) {
+                    Text("Deutsch").tag("de")
+                    Text("English").tag("en")
+                    Text("Französisch").tag("fr")
+                    Text("Automatisch").tag("auto")
+                }
+                .pickerStyle(.segmented)
+
+                Text("Legt die Sprache für die Transkription in allen Workflows fest.")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(.secondary)
+            }
+
             // MARK: Lokaler Modus
             VStack(alignment: .leading, spacing: 10) {
                 SectionLabel(text: "Sicherer Lokaler Modus")

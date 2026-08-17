@@ -306,6 +306,9 @@ public sealed class MainWindow : Window
 
     private void AddCustomizeSettings()
     {
+        AddSectionTitle("Diktatsprache");
+        AddLanguageButtons();
+
         AddSectionTitle("Sicherer lokaler Modus");
         AddSettingRow("Sicherer Lokaler Modus", TogglePill(settings.SecureLocalModeEnabled, () =>
         {
@@ -424,6 +427,24 @@ public sealed class MainWindow : Window
             ShowSettings();
         }));
         body.Children.Add(row);
+    }
+
+    private void AddLanguageButtons()
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
+        row.Children.Add(PillChoice("Deutsch", settings.Language == "de", () => SetLanguage("de")));
+        row.Children.Add(PillChoice("English", settings.Language == "en", () => SetLanguage("en")));
+        row.Children.Add(PillChoice("Französisch", settings.Language == "fr", () => SetLanguage("fr")));
+        row.Children.Add(PillChoice("Auto", settings.Language == "auto", () => SetLanguage("auto")));
+        body.Children.Add(row);
+        body.Children.Add(Text("Gilt für die Transkription in allen Workflows.", 13, FontWeights.Medium, Palette.Muted));
+    }
+
+    private void SetLanguage(string language)
+    {
+        settings.Language = language;
+        SettingsStore.Save(settings);
+        ShowSettings();
     }
 
     private void AddToneButtons()

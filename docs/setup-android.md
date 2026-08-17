@@ -25,7 +25,8 @@ The debug APK is written to
    after the user taps the bubble.
 3. Tap **Floating Bubble aktivieren**, select Quick Text under installed
    accessibility apps, and enable the service.
-4. Choose the language and workflow, then save.
+4. Choose **German**, **English**, **French**, or **Auto** as the dictation
+   language, then choose the workflow and save.
 5. Under **Darstellung**, choose **Auto**, **Hell**, or **Dunkel**. Auto follows
    the Android system appearance.
 

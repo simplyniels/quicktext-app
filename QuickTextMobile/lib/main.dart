@@ -1019,6 +1019,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           label: Text('English'),
                         ),
                         ButtonSegment(
+                          value: 'fr',
+                          label: Text(strings.text('Französisch', 'French')),
+                        ),
+                        ButtonSegment(
                           value: 'auto',
                           label: Text(strings.text('Auto', 'Auto')),
                         ),
