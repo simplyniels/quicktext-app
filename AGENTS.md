@@ -19,7 +19,8 @@ other platform in the same pull request.
 - OpenAI keys must stay in the platform credential store.
 - Hosted mode must never expose the server's OpenAI key or Supabase service
   role key to any client.
-- Online transcription uses `whisper-1`.
+- macOS, Windows, and hosted-server transcription use `whisper-1`.
+- iOS and Android transcription use `gpt-transcribe`.
 - Text improvement and emoji workflows use `gpt-4o-mini`.
 - The calmer-message workflow uses `gpt-4o`.
 - Completed output is copied to the clipboard and pasted into the previously

@@ -21,15 +21,21 @@ object OpenAiClient {
             fun field(name: String, value: String) {
                 output.write("--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n".toByteArray())
             }
-            field("model", "whisper-1")
-            if (language.matches(Regex("[a-z]{2}"))) field("language", language)
-            if (terms.isNotBlank()) field("prompt", "Eigennamen und Begriffe: $terms")
+            field("model", "gpt-transcribe")
+            if (language.matches(Regex("[a-z]{2}"))) field("languages[]", language)
+            transcriptionKeywords(terms).forEach { field("keywords[]", it) }
             output.write("--$boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"recording.m4a\"\r\nContent-Type: audio/mp4\r\n\r\n".toByteArray())
             file.inputStream().use { it.copyTo(output) }
             output.write("\r\n--$boundary--\r\n".toByteArray())
         }
         return parseResponse(connection, "text")
     }
+
+    private fun transcriptionKeywords(terms: String): List<String> = terms
+        .split(',', ';', '\n', '\r')
+        .map(String::trim)
+        .filter { it.isNotEmpty() && '<' !in it && '>' !in it }
+        .distinct()
 
     fun rewrite(text: String, key: String, workflow: String): String {
         if (workflow == "transcription") return text

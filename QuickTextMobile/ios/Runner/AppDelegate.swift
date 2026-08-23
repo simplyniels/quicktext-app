@@ -201,9 +201,9 @@ private enum OpenAIClient {
     func field(_ name: String, _ value: String) {
       body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".data(using: .utf8)!)
     }
-    field("model", "whisper-1")
-    if language.range(of: "^[a-z]{2}$", options: .regularExpression) != nil { field("language", language) }
-    if !terms.isEmpty { field("prompt", "Eigennamen und Begriffe: \(terms)") }
+    field("model", "gpt-transcribe")
+    if language.range(of: "^[a-z]{2}$", options: .regularExpression) != nil { field("languages[]", language) }
+    transcriptionKeywords(terms).forEach { field("keywords[]", $0) }
     body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"recording.m4a\"\r\nContent-Type: audio/mp4\r\n\r\n".data(using: .utf8)!)
     body.append(try Data(contentsOf: file))
     body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
@@ -213,6 +213,15 @@ private enum OpenAIClient {
       throw QuickTextError.message("Leere Transkription")
     }
     return text.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  private static func transcriptionKeywords(_ terms: String) -> [String] {
+    var seen = Set<String>()
+    return terms
+      .components(separatedBy: CharacterSet(charactersIn: ",;\n\r"))
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty && !$0.contains("<") && !$0.contains(">") }
+      .filter { seen.insert($0).inserted }
   }
 
   static func rewrite(text: String, key: String, workflow: String) async throws -> String {

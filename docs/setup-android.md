@@ -4,7 +4,7 @@
 
 - Android 13 or newer
 - Flutter 3.44 or newer and an Android SDK for building
-- An OpenAI API key with access to `whisper-1`, `gpt-4o-mini`, and `gpt-4o`
+- An OpenAI API key with access to `gpt-transcribe`, `gpt-4o-mini`, and `gpt-4o`
 
 ## Build And Install
 
@@ -34,7 +34,7 @@ Open a regular text field in a messaging, mail, browser, or notes app. When the
 software keyboard appears, Quick Text places a blue bubble above it. Tap the
 bubble, marked with the Quick Text app symbol, to record. The bubble becomes a
 recording pill with a live, audio-responsive waveform, timer, and red stop
-button. Stopping sends the recording to `whisper-1`; the selected optional
+button. Stopping sends the recording to `gpt-transcribe`; the selected optional
 rewrite then uses `gpt-4o-mini` or `gpt-4o`.
 
 Drag the bubble to move it away from app controls such as Send or Attach. Quick

@@ -4,7 +4,7 @@
 
 - iOS 15 or newer
 - Xcode 16 or newer and Flutter 3.44 or newer for building
-- An OpenAI API key with access to `whisper-1`, `gpt-4o-mini`, and `gpt-4o`
+- An OpenAI API key with access to `gpt-transcribe`, `gpt-4o-mini`, and `gpt-4o`
 
 ## Build And Run
 
@@ -54,12 +54,12 @@ App Store provisioning profiles for both `de.quicktext.mobile` and
 ## Dictation Flow
 
 1. For Apple's built-in dictation, tap the system microphone at the bottom
-   right while the Quick Text keyboard is visible. For Quick Text's `whisper-1`
+   right while the Quick Text keyboard is visible. For Quick Text's `gpt-transcribe`
    and rewrite workflows, open Quick Text and tap the purple microphone in the
    containing app.
 2. Speak, then tap the red stop button. Recordings stop automatically after
    60 seconds.
-3. Quick Text sends the temporary recording to `whisper-1`, optionally runs the
+3. Quick Text sends the temporary recording to `gpt-transcribe`, optionally runs the
    selected text workflow, and copies the result to the iOS clipboard.
 4. Return to the target app, select the Quick Text keyboard with the globe key,
    and tap **Letztes Diktat einfügen**.

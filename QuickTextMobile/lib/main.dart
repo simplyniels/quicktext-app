@@ -570,8 +570,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 'API key stored securely in ${isIOS ? 'iOS Keychain' : 'Android Keystore'}',
               )
             : strings.text(
-                'Für whisper-1 und die Text-Workflows',
-                'For whisper-1 and text workflows',
+                'Für GPT Transcribe und die Text-Workflows',
+                'For GPT Transcribe and text workflows',
               ),
         done: _apiKey,
         child: TextField(

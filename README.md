@@ -120,8 +120,9 @@ flutter run
 ```
 
 Android 13 or newer is required. The containing app stores the OpenAI API key
-in Android Keystore. Its native Accessibility Service shows a floating Quick
-Text bubble when a regular text field and the software keyboard are active.
+in Android Keystore and uses `gpt-transcribe` for online transcription. Its
+native Accessibility Service shows a floating Quick Text bubble when a regular
+text field and the software keyboard are active.
 The app includes a personal dictionary: words added there (names, brands,
 technical terms) are passed to the transcription so they are recognized
 reliably. See [docs/setup-android.md](docs/setup-android.md) for setup,
@@ -134,11 +135,11 @@ cd QuickTextMobile
 flutter run
 ```
 
-The iOS containing app records, transcribes, optionally rewrites, and copies the
-result. Its native Quick Text keyboard can insert that clipboard result at the
-cursor after the user enables the keyboard and Full Access. iOS does not permit
-a system-wide floating bubble or microphone access inside third-party keyboard
-extensions. See [docs/setup-ios.md](docs/setup-ios.md).
+The iOS containing app records with `gpt-transcribe`, optionally rewrites, and
+copies the result. Its native Quick Text keyboard can insert that clipboard
+result at the cursor after the user enables the keyboard and Full Access. iOS
+does not permit a system-wide floating bubble or microphone access inside
+third-party keyboard extensions. See [docs/setup-ios.md](docs/setup-ios.md).
 
 ## Permissions
 
