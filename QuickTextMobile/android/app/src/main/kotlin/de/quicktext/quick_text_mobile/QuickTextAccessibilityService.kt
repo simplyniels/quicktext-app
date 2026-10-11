@@ -13,7 +13,6 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.Color
 import android.graphics.Outline
-import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaRecorder
 import android.os.Bundle
@@ -55,7 +54,6 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private var timer: TextView? = null
     private var waveform: WaveformView? = null
     private var overlayParams: WindowManager.LayoutParams? = null
-    private var anchorX = -1
     private var anchorY = -1
     private val positionPrefs by lazy { getSharedPreferences("quick_text_overlay", Context.MODE_PRIVATE) }
     private val reconcileIdleBubble = Runnable {
@@ -284,20 +282,19 @@ class QuickTextAccessibilityService : AccessibilityService() {
     private fun replaceOverlay(view: View, widthDp: Int, heightDp: Int) {
         hideOverlay()
         overlay = view
-        val minimumY = keyboardBottomOffset() + dp(88)
-        val maximumY = resources.displayMetrics.heightPixels - dp(heightDp + 24)
-        if (anchorX < 0) anchorX = positionPrefs.getInt("x", dp(16))
-        if (anchorY < 0) anchorY = positionPrefs.getInt("y", minimumY + dp(32))
-        anchorX = anchorX.coerceIn(0, (resources.displayMetrics.widthPixels - dp(widthDp)).coerceAtLeast(0))
-        anchorY = anchorY.coerceIn(minimumY, maximumY.coerceAtLeast(minimumY))
+        val height = dp(heightDp)
+        if (anchorY < 0) {
+            anchorY = positionPrefs.getInt("top_y", defaultOverlayY(height))
+        }
+        anchorY = anchorY.coerceIn(overlayVerticalRange(height))
         val params = WindowManager.LayoutParams(
-            dp(widthDp), dp(heightDp),
+            dp(widthDp), height,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             android.graphics.PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.BOTTOM or Gravity.END
-            x = anchorX
+            gravity = Gravity.TOP or Gravity.END
+            x = dp(16)
             y = anchorY
         }
         overlayParams = params
@@ -308,7 +305,6 @@ class QuickTextAccessibilityService : AccessibilityService() {
         val touchSlop = ViewConfiguration.get(this).scaledTouchSlop
         var downX = 0f
         var downY = 0f
-        var startX = 0
         var startY = 0
         var dragged = false
         view.setOnTouchListener { target, event ->
@@ -318,7 +314,6 @@ class QuickTextAccessibilityService : AccessibilityService() {
                     main.removeCallbacks(reconcileIdleBubble)
                     downX = event.rawX
                     downY = event.rawY
-                    startX = params.x
                     startY = params.y
                     dragged = false
                     true
@@ -327,19 +322,15 @@ class QuickTextAccessibilityService : AccessibilityService() {
                     val deltaX = event.rawX - downX
                     val deltaY = event.rawY - downY
                     if (abs(deltaX) > touchSlop || abs(deltaY) > touchSlop) dragged = true
-                    val minY = keyboardBottomOffset() + dp(72)
-                    val maxX = (resources.displayMetrics.widthPixels - target.width).coerceAtLeast(0)
-                    val maxY = (resources.displayMetrics.heightPixels - target.height - dp(24)).coerceAtLeast(minY)
-                    params.x = (startX - deltaX.toInt()).coerceIn(0, maxX)
-                    params.y = (startY - deltaY.toInt()).coerceIn(minY, maxY)
-                    anchorX = params.x
+                    params.x = dp(16)
+                    params.y = (startY + deltaY.toInt()).coerceIn(overlayVerticalRange(params.height))
                     anchorY = params.y
                     runCatching { windowManager.updateViewLayout(target, params) }
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     if (dragged) {
-                        positionPrefs.edit().putInt("x", anchorX).putInt("y", anchorY).apply()
+                        positionPrefs.edit().putInt("top_y", anchorY).apply()
                     } else {
                         target.performClick()
                     }
@@ -351,12 +342,20 @@ class QuickTextAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun keyboardBottomOffset(): Int {
-        val keyboard = windows.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD } ?: return dp(92)
-        val bounds = Rect()
-        keyboard.getBoundsInScreen(bounds)
-        val screenHeight = resources.displayMetrics.heightPixels
-        return (screenHeight - bounds.top + dp(14)).coerceAtLeast(dp(92))
+    private fun defaultOverlayY(overlayHeight: Int): Int {
+        val screenHeight = windowManager.currentWindowMetrics.bounds.height()
+        return (screenHeight / 3 - overlayHeight / 2).coerceIn(overlayVerticalRange(overlayHeight))
+    }
+
+    private fun overlayVerticalRange(overlayHeight: Int): IntRange {
+        val metrics = windowManager.currentWindowMetrics
+        val screenHeight = metrics.bounds.height()
+        val topInset = metrics.windowInsets
+            .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+            .top
+        val minimumY = topInset + dp(12)
+        val maximumY = (screenHeight / 3 - overlayHeight).coerceAtLeast(minimumY)
+        return minimumY..maximumY
     }
 
     private fun hideOverlay() {

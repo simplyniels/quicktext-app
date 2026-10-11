@@ -31,14 +31,15 @@ The debug APK is written to
    the Android system appearance.
 
 Open a regular text field in a messaging, mail, browser, or notes app. When the
-software keyboard appears, Quick Text places a blue bubble above it. Tap the
-bubble, marked with the Quick Text app symbol, to record. The bubble becomes a
-recording pill with a live, audio-responsive waveform, timer, and red stop
+software keyboard appears, Quick Text places a blue bubble at the right edge of
+the upper third of the screen, away from common Send and Attach controls. Tap
+the bubble, marked with the Quick Text app symbol, to record. The bubble becomes
+a recording pill with a live, audio-responsive waveform, timer, and red stop
 button. Stopping sends the recording to `gpt-transcribe`; the selected optional
 rewrite then uses `gpt-4o-mini` or `gpt-4o`.
 
-Drag the bubble to move it away from app controls such as Send or Attach. Quick
-Text remembers the position and keeps a safety distance above the keyboard.
+Drag the bubble vertically to adjust its position within the upper third of the
+screen. It stays aligned to the right edge and remembers the vertical position.
 Short accessibility-focus changes are debounced so the bubble stays visually
 stable while a text field remains active.
 
